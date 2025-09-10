@@ -1,0 +1,24 @@
+{
+  "name": "@reward-system/shared",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types, constants, and utilities",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.0"
+  },
+  "devDependencies": {
+    "@reward-system/config": "workspace:*",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.2.0"
+  }
+}
