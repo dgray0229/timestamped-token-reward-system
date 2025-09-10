@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { WalletConnection } from '../WalletConnection';
 
 /**
  * Header Component
@@ -64,7 +64,7 @@ export function Header() {
 
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
-            <WalletMultiButton className="!bg-primary !rounded-md !text-primary-foreground hover:!bg-primary/90 !transition-colors !border-0 !h-9 !px-4 !text-sm !font-medium" />
+            <WalletConnection />
           </div>
         </div>
 

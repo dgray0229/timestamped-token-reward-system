@@ -1,0 +1,30 @@
+[package]
+name = "reward-system"
+version = "0.1.0"
+description = "Solana program for timestamped token reward system"
+edition = "2021"
+license = "MIT"
+homepage = ""
+documentation = ""
+repository = ""
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "reward_system"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+solana-program = "1.17"
+
+[dev-dependencies]
+solana-program-test = "1.17"
+solana-sdk = "1.17"
+tokio = { version = "1.0", features = ["macros"] }
