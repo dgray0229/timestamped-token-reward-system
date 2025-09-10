@@ -8,9 +8,9 @@ import {
   selectWalletState,
   clearError
 } from '../store/slices/walletSlice';
-import { showNotification } from '../store/slices/uiSlice';
 import { Button } from './ui/Button';
 import { truncateAddress } from '../lib/utils';
+import { useErrorHandling } from '../hooks/useErrorHandling';
 
 export function WalletConnection() {
   const dispatch = useAppDispatch();
@@ -30,6 +30,8 @@ export function WalletConnection() {
     signMessage 
   } = useWallet();
 
+  const { handleWalletError, handleSuccess, handleInfo } = useErrorHandling();
+
   // Handle wallet connection state changes
   useEffect(() => {
     if (connected && publicKey && wallet && signMessage) {
@@ -44,22 +46,14 @@ export function WalletConnection() {
   // Handle authentication error display
   useEffect(() => {
     if (error) {
-      dispatch(showNotification({
-        type: 'error',
-        message: error,
-        duration: 5000,
-      }));
+      handleWalletError(new Error(error));
       dispatch(clearError());
     }
-  }, [error, dispatch]);
+  }, [error, dispatch, handleWalletError]);
 
   const handleAuthentication = async () => {
     if (!publicKey || !signMessage) {
-      dispatch(showNotification({
-        type: 'error',
-        message: 'Wallet not properly connected',
-        duration: 3000,
-      }));
+      handleWalletError(new Error('Wallet not properly connected'));
       return;
     }
 
@@ -69,13 +63,9 @@ export function WalletConnection() {
         signMessage,
       })).unwrap();
 
-      dispatch(showNotification({
-        type: 'success',
-        message: 'Wallet connected successfully!',
-        duration: 3000,
-      }));
+      handleSuccess('Wallet connected successfully!');
     } catch (error) {
-      console.error('Authentication failed:', error);
+      handleWalletError(error);
     }
   };
 
@@ -83,13 +73,9 @@ export function WalletConnection() {
     try {
       await disconnect();
       dispatch(disconnectWallet());
-      dispatch(showNotification({
-        type: 'info',
-        message: 'Wallet disconnected',
-        duration: 3000,
-      }));
+      handleInfo('Wallet disconnected');
     } catch (error) {
-      console.error('Disconnect failed:', error);
+      handleWalletError(error);
     }
   };
 

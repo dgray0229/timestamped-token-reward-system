@@ -7,6 +7,17 @@ import App from './App';
 import { store } from './store';
 import './styles/globals.css';
 
+// Initialize global error handling
+import { 
+  setupGlobalErrorHandler, 
+  setupPerformanceMonitoring, 
+  setupNetworkMonitoring 
+} from './utils/globalErrorHandler';
+
+setupGlobalErrorHandler();
+setupPerformanceMonitoring();
+setupNetworkMonitoring();
+
 // Solana wallet context providers
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';

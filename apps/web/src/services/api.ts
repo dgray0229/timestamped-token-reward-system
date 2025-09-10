@@ -6,9 +6,10 @@
  * - Request/response logging and error handling
  * - Authentication token management
  * - Request retry logic for improved reliability
+ * - Comprehensive error transformation and user feedback
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import type { ApiResponse, ApiError } from '@reward-system/shared';
 
 // API configuration from environment variables
@@ -68,7 +69,7 @@ const createApiClient = (): AxiosInstance => {
 
       return response;
     },
-    (error) => {
+    (error: AxiosError) => {
       // Log error in development
       if (import.meta.env.DEV) {
         console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
@@ -80,22 +81,14 @@ const createApiClient = (): AxiosInstance => {
 
       // Handle specific error cases
       if (error.response?.status === 401) {
-        // Unauthorized - clear session and redirect to login
+        // Unauthorized - clear session and trigger logout
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('user');
         window.dispatchEvent(new CustomEvent('auth:logout'));
       }
 
-      // Transform API error format
-      const apiError: ApiError = error.response?.data || {
-        error: {
-          code: 'NETWORK_ERROR',
-          message: error.message || 'Network error occurred',
-          timestamp: new Date().toISOString(),
-          requestId: error.config?.headers?.['X-Request-ID'] || 'unknown',
-        },
-      };
-
+      // Transform and enhance error information
+      const apiError: ApiError = transformError(error);
       return Promise.reject(apiError);
     }
   );
@@ -211,4 +204,119 @@ export function getAuthToken(): string | null {
  */
 export function clearAuthToken() {
   setAuthToken(null);
+}
+
+/**
+ * Transform axios error into standardized API error format
+ */
+function transformError(error: AxiosError): ApiError {
+  const requestId = error.config?.headers?.['X-Request-ID'] as string || 'unknown';
+  const timestamp = new Date().toISOString();
+
+  // Network/connection errors
+  if (!error.response) {
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      return {
+        error: {
+          code: 'TIMEOUT_ERROR',
+          message: 'Request timed out. Please try again.',
+          timestamp,
+          requestId,
+        },
+      };
+    }
+    
+    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+      return {
+        error: {
+          code: 'NETWORK_ERROR',
+          message: 'Network connection failed. Please check your internet connection.',
+          timestamp,
+          requestId,
+        },
+      };
+    }
+
+    return {
+      error: {
+        code: 'CONNECTION_ERROR',
+        message: 'Unable to connect to server. Please try again later.',
+        timestamp,
+        requestId,
+      },
+    };
+  }
+
+  // Server responded with error status
+  const status = error.response.status;
+  const responseData = error.response.data as any;
+
+  // If server returned structured error, use it
+  if (responseData?.error) {
+    return responseData as ApiError;
+  }
+
+  // Generate appropriate error based on status code
+  let code: string;
+  let message: string;
+
+  switch (status) {
+    case 400:
+      code = 'BAD_REQUEST';
+      message = 'Invalid request. Please check your input.';
+      break;
+    case 401:
+      code = 'UNAUTHORIZED';
+      message = 'Authentication required. Please connect your wallet.';
+      break;
+    case 403:
+      code = 'FORBIDDEN';
+      message = 'Access denied. You do not have permission for this action.';
+      break;
+    case 404:
+      code = 'NOT_FOUND';
+      message = 'Resource not found.';
+      break;
+    case 409:
+      code = 'CONFLICT';
+      message = 'Conflict with current state. Please refresh and try again.';
+      break;
+    case 422:
+      code = 'VALIDATION_ERROR';
+      message = 'Validation failed. Please check your input.';
+      break;
+    case 429:
+      code = 'RATE_LIMIT_EXCEEDED';
+      message = 'Too many requests. Please wait a moment and try again.';
+      break;
+    case 500:
+      code = 'INTERNAL_ERROR';
+      message = 'Internal server error. Please try again later.';
+      break;
+    case 502:
+      code = 'BAD_GATEWAY';
+      message = 'Server temporarily unavailable. Please try again later.';
+      break;
+    case 503:
+      code = 'SERVICE_UNAVAILABLE';
+      message = 'Service temporarily unavailable. Please try again later.';
+      break;
+    case 504:
+      code = 'GATEWAY_TIMEOUT';
+      message = 'Request timed out. Please try again.';
+      break;
+    default:
+      code = 'HTTP_ERROR';
+      message = responseData?.message || error.message || `HTTP Error ${status}`;
+  }
+
+  return {
+    error: {
+      code,
+      message,
+      timestamp,
+      requestId,
+      status,
+    },
+  };
 }

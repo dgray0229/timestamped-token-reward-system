@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 // Components
 import { Layout } from './components/layout/Layout';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { ToastContainer } from './components/ui/Toast';
 
 // Pages
 import { HomePage } from './pages/Home';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </Layout>
+      <ToastContainer />
     </ErrorBoundary>
   );
 }
