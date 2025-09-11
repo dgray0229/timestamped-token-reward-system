@@ -26,18 +26,25 @@ export type {
 } from './types';
 
 export {
-  API_CONFIG,
-  SOLANA_NETWORKS,
-  TOKEN_CONFIG,
-  VALIDATION_HELPERS,
+  APP_CONFIG,
+  ENV_CONFIG,
+} from './constants';
+
+export {
   formatTokenAmount,
   formatWalletAddress,
   formatDate,
+} from './utils/formatting';
+
+export {
   validateUsername,
   validateWalletAddress,
+} from './utils/validation';
+
+export {
   generateNonce,
   generateSignatureMessage,
-} from './constants';
+} from './utils/crypto';
 
 // Package metadata
 export const PACKAGE_INFO = {

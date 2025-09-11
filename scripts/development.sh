@@ -61,7 +61,9 @@ fi
 
 # Build shared packages
 echo "🏗️  Building shared packages..."
-npm run build --workspace=packages/shared
+cd packages/shared
+npx tsc
+cd ../..
 
 # Initialize Solana program if Anchor is available
 if command_exists anchor; then

@@ -8,40 +8,37 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo build",
-    "build:packages": "turbo build --filter='@reward-system/shared' --filter='@reward-system/ui' --filter='@reward-system/config'",
-    "build:web": "turbo build --filter=web",
-    "build:api": "turbo build --filter=api",
-    "dev": "turbo dev",
-    "dev:web": "turbo dev --filter=web",
-    "dev:api": "turbo dev --filter=api",
+    "build": "npm run build --workspaces",
+    "build:packages": "npm run build --workspace=packages/shared",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "dev": "npm run dev --workspaces",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
     "dev:solana": "solana-test-validator --reset --quiet",
-    "test": "turbo test",
-    "test:web": "turbo test --filter=web",
-    "test:api": "turbo test --filter=api",
-    "test:solana": "turbo test --filter=solana-program",
-    "test:ci": "turbo test --parallel",
-    "lint": "turbo lint",
-    "lint:fix": "turbo lint:fix",
+    "test": "npm run test --workspaces",
+    "test:web": "npm run test --workspace=apps/web",
+    "test:api": "npm run test --workspace=apps/api",
+    "test:solana": "npm run test --workspace=apps/solana-program",
+    "test:ci": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "type-check": "turbo type-check",
-    "clean": "turbo clean && rm -rf node_modules",
+    "type-check": "npm run type-check --workspaces",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
     "db:setup": "cd apps/api && npm run db:setup",
     "generate:anchor-types": "cd apps/solana-program && anchor build && anchor generate ts",
-    "setup": "pnpm install && pnpm build:packages"
+    "setup": "npm install && npm run build:packages"
   },
   "devDependencies": {
-    "@turbo/gen": "^1.10.0",
-    "turbo": "^1.10.0",
     "prettier": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "typescript": "^5.2.0"
   },
-  "packageManager": "pnpm@8.15.0",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }

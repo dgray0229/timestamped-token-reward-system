@@ -17,15 +17,8 @@ export * from './API';
 // Solana blockchain types
 export * from './Solana';
 
-// Re-export commonly used types with aliases for convenience
-export type {
-  User as UserEntity,
-  RewardTransaction as TransactionEntity,
-  TransactionStatus,
-  ApiError as APIError,
-  WalletState as SolanaWalletState,
-} from './User';
-
-export type { RewardTransaction } from './RewardTransaction';
+// Main exports
+export type { User } from './User';
+export type { RewardTransaction, TransactionStatus } from './RewardTransaction';
 export type { ApiError, ApiResponse } from './API';
 export type { WalletState, SolanaNetwork, RewardPoolAccount } from './Solana';

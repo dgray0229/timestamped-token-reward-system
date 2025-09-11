@@ -62,7 +62,7 @@ export const formatDate = (
       });
     
     case 'ISO':
-      return dateObj.toISOString().split('T')[0];
+      return dateObj.toISOString().split('T')[0]!;
     
     case 'RELATIVE':
       return formatRelativeTime(dateObj);

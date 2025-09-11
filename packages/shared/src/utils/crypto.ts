@@ -20,7 +20,7 @@ export const generateNonce = (length: number = SECURITY_VALIDATION.SIGNATURE.NON
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
     for (let i = 0; i < length; i++) {
-      result += chars[array[i] % chars.length];
+      result += chars[array[i]! % chars.length];
     }
   } else {
     // Fallback for Node.js environment
