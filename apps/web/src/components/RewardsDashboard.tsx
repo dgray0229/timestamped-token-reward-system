@@ -1,16 +1,16 @@
 import { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store';
 import { 
   fetchAvailableRewards,
   claimRewards,
-  selectRewardsState,
+  selectRewards,
 } from '../store/slices/rewardsSlice';
 import { 
-  fetchTransactionHistory,
-  selectTransactionsState,
+  fetchTransactions,
+  selectTransactions,
 } from '../store/slices/transactionsSlice';
-import { selectWalletState } from '../store/slices/walletSlice';
-import { showNotification } from '../store/slices/uiSlice';
+import { selectWallet } from '../store/slices/walletSlice';
+import { addNotification } from '../store/slices/uiSlice';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -19,23 +19,23 @@ import { formatCurrency, formatTimeAgo, truncateAddress } from '../lib/utils';
 
 export function RewardsDashboard() {
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector(selectWalletState);
+  const { isAuthenticated } = useAppSelector(selectWallet);
   const { 
     availableRewards, 
     isLoading: rewardsLoading, 
     isClaiming,
     error: rewardsError 
-  } = useAppSelector(selectRewardsState);
+  } = useAppSelector(selectRewards);
   const { 
     transactions, 
     isLoading: transactionsLoading 
-  } = useAppSelector(selectTransactionsState);
+  } = useAppSelector(selectTransactions);
 
   // Fetch data when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchAvailableRewards());
-      dispatch(fetchTransactionHistory({ page: 1, limit: 10 }));
+      dispatch(fetchTransactions({ page: 1, limit: 10 }));
     }
   }, [isAuthenticated, dispatch]);
 
@@ -52,7 +52,7 @@ export function RewardsDashboard() {
 
   const handleClaimRewards = async () => {
     if (!availableRewards || parseFloat(availableRewards.available_amount) <= 0) {
-      dispatch(showNotification({
+      dispatch(addNotification({
         type: 'warning',
         message: 'No rewards available to claim',
         duration: 3000,
@@ -63,7 +63,7 @@ export function RewardsDashboard() {
     try {
       await dispatch(claimRewards(availableRewards.available_amount)).unwrap();
       
-      dispatch(showNotification({
+      dispatch(addNotification({
         type: 'success',
         message: `Successfully claimed ${availableRewards.available_amount} tokens!`,
         duration: 5000,
@@ -71,7 +71,7 @@ export function RewardsDashboard() {
 
       // Refresh data after successful claim
       dispatch(fetchAvailableRewards());
-      dispatch(fetchTransactionHistory({ page: 1, limit: 10 }));
+      dispatch(fetchTransactions({ page: 1, limit: 10 }));
     } catch (error) {
       console.error('Claim failed:', error);
     }

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { removeNotification, selectUiState } from '../../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { removeNotification, selectUi } from '../../store/slices/uiSlice';
 import { cn } from '../../lib/utils';
 
 export function ToastContainer() {
-  const { notifications } = useAppSelector(selectUiState);
+  const { notifications } = useAppSelector(selectUi);
   const dispatch = useAppDispatch();
 
   return (

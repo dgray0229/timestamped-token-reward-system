@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useAppDispatch } from '../store/hooks';
-import { showNotification } from '../store/slices/uiSlice';
+import { useAppDispatch } from '../store';
+import { addNotification } from '../store/slices/uiSlice';
 
 export interface ErrorDetails {
   code?: string;
@@ -42,7 +42,7 @@ export function useErrorHandling() {
     const userFriendlyMessage = getUserFriendlyMessage(errorCode, errorMessage);
 
     // Show notification to user
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'error',
       message: userFriendlyMessage,
       duration: 5000,
@@ -75,7 +75,7 @@ export function useErrorHandling() {
       }
     }
 
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'error',
       message,
       duration: 5000,
@@ -88,7 +88,7 @@ export function useErrorHandling() {
       ? `Please fix the following errors: ${errorMessages.join(', ')}`
       : errorMessages[0] || 'Please check your input and try again.';
 
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'error',
       message,
       duration: 4000,
@@ -112,7 +112,7 @@ export function useErrorHandling() {
       }
     }
 
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'error',
       message,
       duration: 5000,
@@ -120,7 +120,7 @@ export function useErrorHandling() {
   }, [dispatch]);
 
   const handleSuccess = useCallback((message: string, duration = 3000) => {
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'success',
       message,
       duration,
@@ -128,7 +128,7 @@ export function useErrorHandling() {
   }, [dispatch]);
 
   const handleInfo = useCallback((message: string, duration = 3000) => {
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'info',
       message,
       duration,
@@ -136,7 +136,7 @@ export function useErrorHandling() {
   }, [dispatch]);
 
   const handleWarning = useCallback((message: string, duration = 4000) => {
-    dispatch(showNotification({
+    dispatch(addNotification({
       type: 'warning',
       message,
       duration,

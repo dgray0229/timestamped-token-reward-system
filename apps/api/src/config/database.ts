@@ -27,10 +27,14 @@ export const supabase = createClient<Database>(
 
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .limit(1);
+    // Try a simple RPC call that should work even without tables
+    const { error } = await supabase.rpc('version');
+    
+    // If we get PGRST116 or PGRST202 error, it means connection works but function doesn't exist
+    if (error && (error.code === 'PGRST116' || error.code === 'PGRST202')) {
+      console.log('✅ Database connection successful (no tables created yet)');
+      return true;
+    }
     
     if (error) {
       console.error('Database connection test failed:', error);

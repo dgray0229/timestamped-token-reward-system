@@ -31,7 +31,20 @@ export async function authenticateToken(
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    // Try to verify with our custom JWT secret first
+    let decoded: { userId: string };
+    
+    try {
+      decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    } catch (customJwtError) {
+      // Fallback to Supabase JWT secret if available
+      const supabaseJwtSecret = process.env.SUPABASE_JWT_SECRET;
+      if (supabaseJwtSecret) {
+        decoded = jwt.verify(token, supabaseJwtSecret) as { userId: string };
+      } else {
+        throw customJwtError;
+      }
+    }
     
     // Fetch user from database to ensure they still exist
     const { data: user, error } = await supabase

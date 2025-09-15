@@ -141,6 +141,7 @@ async function startServer(): Promise<void> {
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   } catch (error) {
+    console.error('Failed to start server:', error);
     logger.error('Failed to start server', { error });
     process.exit(1);
   }

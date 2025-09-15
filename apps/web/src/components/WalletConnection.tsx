@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store';
 import { 
-  connectWallet, 
+  authenticateWallet, 
   disconnectWallet,
-  selectWalletState,
-  clearError
+  selectWallet,
+  clearErrors
 } from '../store/slices/walletSlice';
 import { Button } from './ui/Button';
 import { truncateAddress } from '../lib/utils';
@@ -20,7 +20,7 @@ export function WalletConnection() {
     user, 
     isConnecting, 
     error 
-  } = useAppSelector(selectWalletState);
+  } = useAppSelector(selectWallet);
   
   const { 
     wallet, 
@@ -47,7 +47,7 @@ export function WalletConnection() {
   useEffect(() => {
     if (error) {
       handleWalletError(new Error(error));
-      dispatch(clearError());
+      dispatch(clearErrors());
     }
   }, [error, dispatch, handleWalletError]);
 
@@ -58,7 +58,7 @@ export function WalletConnection() {
     }
 
     try {
-      await dispatch(connectWallet({
+      await dispatch(authenticateWallet({
         walletAddress: publicKey.toString(),
         signMessage,
       })).unwrap();
