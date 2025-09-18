@@ -35,13 +35,18 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Title */}
           <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-md flex items-center justify-center">
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-md flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-sm">TR</span>
               </div>
-              <span className="font-semibold text-lg hidden sm:inline-block">
-                Token Rewards
-              </span>
+              <div className="hidden sm:flex flex-col">
+                <span className="font-semibold text-lg leading-tight">
+                  Token Rewards
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Solana DApp
+                </span>
+              </div>
             </Link>
           </div>
 

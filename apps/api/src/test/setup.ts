@@ -10,30 +10,59 @@ process.env.SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SOLANA_NETWORK = 'devnet';
 process.env.SOLANA_RPC_URL = 'https://api.devnet.solana.com';
 
+// Test data helpers (defined before mocks that use them)
+export const createTestUser = () => ({
+  id: 'test-user-id',
+  wallet_address: 'test-wallet-address',
+  username: 'testuser',
+  email: 'test@example.com',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  last_login: new Date().toISOString(),
+  is_active: true,
+  metadata: {},
+});
+
 // Mock Supabase client
 const mockSupabaseClient = {
-  from: jest.fn(() => ({
-    select: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    lt: jest.fn().mockReturnThis(),
-    gt: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    like: jest.fn().mockReturnThis(),
-    ilike: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    range: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    then: jest.fn(),
-    catch: jest.fn(),
-  })),
+  from: jest.fn(() => {
+    const queryBuilder = {
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      lt: jest.fn().mockReturnThis(),
+      gt: jest.fn().mockReturnThis(),
+      lte: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      like: jest.fn().mockReturnThis(),
+      ilike: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      or: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      range: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: createTestUser(),
+        error: null
+      }),
+      mockResolvedValue: jest.fn().mockResolvedValue({
+        data: [createTestUser()],
+        error: null
+      }),
+      then: jest.fn((callback) => callback({ data: createTestUser(), error: null })),
+      catch: jest.fn(),
+    };
+    // Make the query builder methods resolve correctly
+    Object.keys(queryBuilder).forEach(key => {
+      if (typeof queryBuilder[key] === 'function' && key !== 'single' && key !== 'then' && key !== 'catch' && key !== 'mockResolvedValue') {
+        queryBuilder[key].mockReturnValue(queryBuilder);
+      }
+    });
+    return queryBuilder;
+  }),
   auth: {
     signInWithPassword: jest.fn(),
     signOut: jest.fn(),
@@ -108,18 +137,7 @@ global.console = {
   error: jest.fn(),
 };
 
-// Test database helpers
-export const createTestUser = () => ({
-  id: 'test-user-id',
-  wallet_address: 'test-wallet-address',
-  username: 'testuser',
-  email: 'test@example.com',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  last_login: new Date().toISOString(),
-  is_active: true,
-  metadata: {},
-});
+// Test database helpers (createTestUser moved above mocks)
 
 export const createTestTransaction = () => ({
   id: 'test-transaction-id',

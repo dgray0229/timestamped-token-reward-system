@@ -27,7 +27,7 @@ vi.mock('@solana/wallet-adapter-react', () => ({
 }));
 
 vi.mock('@solana/wallet-adapter-react-ui', () => ({
-  WalletMultiButton: () => <button>Connect Wallet</button>,
+  WalletMultiButton: () => ({ type: 'button', children: 'Connect Wallet' }),
   WalletModalProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  extends: ['@reward-system/config/eslint/base'],
+  extends: ['./packages/config/eslint/base.js'],
   settings: {
     next: {
       rootDir: ['apps/*/'],

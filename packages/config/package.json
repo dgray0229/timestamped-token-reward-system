@@ -4,10 +4,19 @@
   "description": "Shared configuration files for ESLint, TypeScript, and other tools",
   "private": true,
   "main": "./index.js",
+  "exports": {
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/node": "./eslint/node.js",
+    "./eslint/react": "./eslint/react.js",
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/node.json": "./typescript/node.json",
+    "./typescript/react.json": "./typescript/react.json"
+  },
   "files": [
     "eslint",
     "typescript",
-    "jest"
+    "jest",
+    "index.js"
   ],
   "scripts": {
     "lint": "eslint .",
