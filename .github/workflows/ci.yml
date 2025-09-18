@@ -1,0 +1,217 @@
+name: CI - Test and Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Detect changes to determine what needs to be built/tested
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+            api:
+              - 'apps/api/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+            web:
+              - 'apps/web/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+            workflows:
+              - '.github/workflows/**'
+
+  # Quality gates - linting, formatting, type checking
+  quality-gates:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.workflows == 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build:packages
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Format check
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,md}"
+
+      - name: Type check
+        run: npm run type-check
+
+  # Unit and integration tests
+  test:
+    runs-on: ubuntu-latest
+    needs: [changes, quality-gates]
+    if: ${{ needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true' }}
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: reward_system_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build:packages
+
+      - name: Run tests
+        run: npm run test:ci
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/reward_system_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-ci
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: test-key
+          SUPABASE_ANON_KEY: test-key
+
+  # Build and push container images
+  build-images:
+    runs-on: ubuntu-latest
+    needs: [changes, test]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+    strategy:
+      matrix:
+        include:
+          - app: api
+            dockerfile: apps/api/Dockerfile
+            context: .
+            condition: ${{ needs.changes.outputs.api == 'true' }}
+          - app: web
+            dockerfile: apps/web/Dockerfile
+            context: .
+            condition: ${{ needs.changes.outputs.web == 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: ${{ matrix.condition == 'true' }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: ${{ matrix.condition == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        if: ${{ matrix.condition == 'true' }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.app }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        if: ${{ matrix.condition == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_SOLANA_NETWORK=${{ secrets.VITE_SOLANA_NETWORK }}
+            VITE_SOLANA_RPC_URL=${{ secrets.VITE_SOLANA_RPC_URL }}
+
+  # Notify on build completion
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: always()
+
+    steps:
+      - name: Notify success
+        if: ${{ needs.build-images.result == 'success' }}
+        run: |
+          echo "✅ CI pipeline completed successfully"
+          echo "Docker images built and pushed to registry"
+
+      - name: Notify failure
+        if: ${{ needs.build-images.result == 'failure' }}
+        run: |
+          echo "❌ CI pipeline failed"
+          echo "Check the logs for details"
+          exit 1

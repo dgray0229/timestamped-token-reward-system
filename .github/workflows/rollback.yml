@@ -1,0 +1,358 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to rollback (api, web, or both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - api
+          - web
+          - both
+      deployment_id:
+        description: 'Deployment ID to rollback to (leave empty for previous deployment)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Validate rollback request
+  validate-rollback:
+    runs-on: ubuntu-latest
+    outputs:
+      rollback-api: ${{ steps.determine.outputs.rollback-api }}
+      rollback-web: ${{ steps.determine.outputs.rollback-web }}
+      deployment-id: ${{ steps.determine.outputs.deployment-id }}
+
+    steps:
+      - name: Validate inputs
+        run: |
+          echo "🔍 Validating rollback request..."
+          echo "Service: ${{ github.event.inputs.service }}"
+          echo "Deployment ID: ${{ github.event.inputs.deployment_id || 'Previous deployment' }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+      - name: Determine rollback scope
+        id: determine
+        run: |
+          if [[ "${{ github.event.inputs.service }}" == "api" || "${{ github.event.inputs.service }}" == "both" ]]; then
+            echo "rollback-api=true" >> $GITHUB_OUTPUT
+          else
+            echo "rollback-api=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ "${{ github.event.inputs.service }}" == "web" || "${{ github.event.inputs.service }}" == "both" ]]; then
+            echo "rollback-web=true" >> $GITHUB_OUTPUT
+          else
+            echo "rollback-web=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ -n "${{ github.event.inputs.deployment_id }}" ]]; then
+            echo "deployment-id=${{ github.event.inputs.deployment_id }}" >> $GITHUB_OUTPUT
+          else
+            echo "deployment-id=previous" >> $GITHUB_OUTPUT
+          fi
+
+  # Create backup of current deployment
+  backup-current:
+    runs-on: ubuntu-latest
+    needs: validate-rollback
+    environment: production
+
+    steps:
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Backup current deployment info
+        run: |
+          echo "📦 Creating backup of current deployment state..."
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+          # Get current deployment info
+          if [[ "${{ needs.validate-rollback.outputs.rollback-api }}" == "true" ]]; then
+            echo "Current API deployment:" >> rollback-backup.txt
+            railway deployment list --service api | head -5 >> rollback-backup.txt
+          fi
+
+          if [[ "${{ needs.validate-rollback.outputs.rollback-web }}" == "true" ]]; then
+            echo "Current Web deployment:" >> rollback-backup.txt
+            railway deployment list --service web | head -5 >> rollback-backup.txt
+          fi
+
+          # Store backup info
+          echo "Backup created at: $(date)" >> rollback-backup.txt
+          cat rollback-backup.txt
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-backup-${{ github.run_id }}
+          path: rollback-backup.txt
+          retention-days: 30
+
+  # Rollback API service
+  rollback-api:
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, backup-current]
+    if: needs.validate-rollback.outputs.rollback-api == 'true'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Rollback API service
+        run: |
+          echo "🔄 Rolling back API service..."
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+          # Get deployment to rollback to
+          if [[ "${{ needs.validate-rollback.outputs.deployment-id }}" == "previous" ]]; then
+            # Get the second most recent deployment (skip current)
+            DEPLOYMENT_ID=$(railway deployment list --service api --json | jq -r '.[1].id')
+            echo "Rolling back to previous deployment: $DEPLOYMENT_ID"
+          else
+            DEPLOYMENT_ID="${{ needs.validate-rollback.outputs.deployment-id }}"
+            echo "Rolling back to specified deployment: $DEPLOYMENT_ID"
+          fi
+
+          # Perform rollback
+          railway deployment redeploy $DEPLOYMENT_ID --service api
+          echo "API rollback initiated"
+
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Wait for API rollback completion
+        run: |
+          echo "⏳ Waiting for API rollback to complete..."
+          sleep 60  # Give Railway time to deploy
+
+      - name: Verify API rollback
+        run: |
+          echo "🔍 Verifying API rollback..."
+          max_attempts=10
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            if curl -f "${{ secrets.API_HEALTH_URL }}/health"; then
+              echo "✅ API rollback successful - health check passed"
+              break
+            else
+              echo "❌ API health check failed (attempt $attempt/$max_attempts)"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "API rollback verification failed"
+                exit 1
+              fi
+              sleep 15
+              attempt=$((attempt + 1))
+            fi
+          done
+
+  # Rollback Web service
+  rollback-web:
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, backup-current, rollback-api]
+    if: ${{ always() && needs.validate-rollback.outputs.rollback-web == 'true' && (needs.rollback-api.result == 'success' || needs.rollback-api.result == 'skipped') }}
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Rollback Web service
+        run: |
+          echo "🔄 Rolling back Web service..."
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+          # Get deployment to rollback to
+          if [[ "${{ needs.validate-rollback.outputs.deployment-id }}" == "previous" ]]; then
+            # Get the second most recent deployment (skip current)
+            DEPLOYMENT_ID=$(railway deployment list --service web --json | jq -r '.[1].id')
+            echo "Rolling back to previous deployment: $DEPLOYMENT_ID"
+          else
+            DEPLOYMENT_ID="${{ needs.validate-rollback.outputs.deployment-id }}"
+            echo "Rolling back to specified deployment: $DEPLOYMENT_ID"
+          fi
+
+          # Perform rollback
+          railway deployment redeploy $DEPLOYMENT_ID --service web
+          echo "Web rollback initiated"
+
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Wait for Web rollback completion
+        run: |
+          echo "⏳ Waiting for Web rollback to complete..."
+          sleep 60  # Give Railway time to deploy
+
+      - name: Verify Web rollback
+        run: |
+          echo "🔍 Verifying Web rollback..."
+          max_attempts=10
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            if curl -f "${{ secrets.WEB_HEALTH_URL }}/health"; then
+              echo "✅ Web rollback successful - health check passed"
+              break
+            else
+              echo "❌ Web health check failed (attempt $attempt/$max_attempts)"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "Web rollback verification failed"
+                exit 1
+              fi
+              sleep 15
+              attempt=$((attempt + 1))
+            fi
+          done
+
+  # Post-rollback validation
+  post-rollback-tests:
+    runs-on: ubuntu-latest
+    needs: [rollback-api, rollback-web]
+    if: ${{ always() && (needs.rollback-api.result == 'success' || needs.rollback-web.result == 'success') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run post-rollback smoke tests
+        run: |
+          echo "🧪 Running post-rollback smoke tests..."
+
+          # Basic connectivity tests
+          if curl -f "${{ secrets.API_HEALTH_URL }}/health"; then
+            echo "✅ API connectivity verified"
+          else
+            echo "❌ API connectivity failed"
+            exit 1
+          fi
+
+          if curl -f "${{ secrets.WEB_HEALTH_URL }}"; then
+            echo "✅ Web connectivity verified"
+          else
+            echo "❌ Web connectivity failed"
+            exit 1
+          fi
+
+          echo "✅ Smoke tests passed"
+
+  # Notification and documentation
+  rollback-notification:
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, rollback-api, rollback-web, post-rollback-tests]
+    if: always()
+
+    steps:
+      - name: Generate rollback summary
+        run: |
+          echo "🔄 Rollback Summary Report" > rollback-summary.txt
+          echo "=========================" >> rollback-summary.txt
+          echo "Timestamp: $(date)" >> rollback-summary.txt
+          echo "Triggered by: ${{ github.actor }}" >> rollback-summary.txt
+          echo "Reason: ${{ github.event.inputs.reason }}" >> rollback-summary.txt
+          echo "Service: ${{ github.event.inputs.service }}" >> rollback-summary.txt
+          echo "Deployment ID: ${{ github.event.inputs.deployment_id || 'Previous deployment' }}" >> rollback-summary.txt
+          echo "" >> rollback-summary.txt
+          echo "Results:" >> rollback-summary.txt
+          echo "- API Rollback: ${{ needs.rollback-api.result || 'skipped' }}" >> rollback-summary.txt
+          echo "- Web Rollback: ${{ needs.rollback-web.result || 'skipped' }}" >> rollback-summary.txt
+          echo "- Post-rollback Tests: ${{ needs.post-rollback-tests.result }}" >> rollback-summary.txt
+
+          cat rollback-summary.txt
+
+      - name: Upload rollback summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-summary-${{ github.run_id }}
+          path: rollback-summary.txt
+          retention-days: 90
+
+      - name: Rollback status notification
+        run: |
+          if [[ "${{ needs.rollback-api.result }}" == "success" || "${{ needs.rollback-web.result }}" == "success" ]]; then
+            echo "✅ Rollback completed successfully"
+            echo "Services are healthy and operational"
+          else
+            echo "❌ Rollback failed or partially failed"
+            echo "Manual intervention may be required"
+            exit 1
+          fi
+
+  # Create incident tracking issue
+  create-incident-issue:
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, rollback-notification]
+    if: always()
+
+    steps:
+      - name: Create rollback incident issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const rollbackStatus = '${{ needs.rollback-notification.result }}' === 'success' ? 'Successful' : 'Failed';
+            const title = `🔄 Production Rollback - ${rollbackStatus} - ${new Date().toISOString().split('T')[0]}`;
+
+            const body = `
+            ## Rollback Incident Report
+
+            **Status**: ${rollbackStatus}
+            **Timestamp**: ${new Date().toISOString()}
+            **Triggered by**: ${{ github.actor }}
+            **Workflow Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### Rollback Details
+            - **Service**: ${{ github.event.inputs.service }}
+            - **Deployment ID**: ${{ github.event.inputs.deployment_id || 'Previous deployment' }}
+            - **Reason**: ${{ github.event.inputs.reason }}
+
+            ### Results
+            - API Rollback: ${{ needs.rollback-api.result || 'skipped' }}
+            - Web Rollback: ${{ needs.rollback-web.result || 'skipped' }}
+            - Post-rollback Tests: ${{ needs.post-rollback-tests.result }}
+
+            ### Next Steps
+            - [ ] Investigate root cause of original issue
+            - [ ] Plan fix implementation
+            - [ ] Schedule re-deployment
+            - [ ] Update monitoring/alerting if needed
+            - [ ] Document lessons learned
+
+            ### Artifacts
+            - [Deployment Backup](../../actions/runs/${{ github.run_id }})
+            - [Rollback Summary](../../actions/runs/${{ github.run_id }})
+
+            **Auto-generated by rollback workflow**
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['incident', 'rollback', 'production']
+            });

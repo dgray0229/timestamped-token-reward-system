@@ -1,0 +1,15 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "nginx -g 'daemon off;'"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+[environment]
+# Frontend environment variables will be set during build
+
+[networking]
+serviceName = "web"
