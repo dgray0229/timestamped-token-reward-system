@@ -4,7 +4,24 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'buffer-polyfill',
+      config(config, { command }) {
+        if (command === 'serve') {
+          config.define = config.define || {};
+          config.define.global = 'globalThis';
+        }
+      },
+      transformIndexHtml(html) {
+        return html.replace(
+          '<head>',
+          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>'
+        );
+      },
+    },
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -25,8 +42,6 @@ export default defineConfig({
     },
   },
   define: {
-    // Define global constants for Solana
-    global: 'globalThis',
     // Fix process.env for browser
     'process.env': {},
   },

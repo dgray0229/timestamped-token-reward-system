@@ -23,7 +23,6 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
-  PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
@@ -37,9 +36,8 @@ const network = (import.meta.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) ||
 // Get RPC endpoint
 const endpoint = import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
 
-// Initialize wallet adapters
+// Initialize wallet adapters (Phantom auto-registers as a Standard Wallet)
 const wallets = [
-  new PhantomWalletAdapter(),
   new SolflareWalletAdapter({ network }),
 ];
 
@@ -49,7 +47,12 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Provider store={store}>
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider wallets={wallets} autoConnect>

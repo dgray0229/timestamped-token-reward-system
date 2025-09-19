@@ -19,28 +19,39 @@ export function verifyWalletSignature(
   walletAddress: string
 ): SignatureVerificationResult {
   try {
-    // Decode the signature from base58
-    const signatureBytes = bs58.decode(signature);
-    
+    let signatureBytes: Uint8Array;
+
+    // Try to decode as base64 first (common wallet format), then fall back to base58
+    try {
+      signatureBytes = new Uint8Array(Buffer.from(signature, 'base64'));
+    } catch {
+      try {
+        signatureBytes = bs58.decode(signature);
+      } catch {
+        throw new Error('Invalid signature format - must be base64 or base58');
+      }
+    }
+
     // Convert message to bytes
     const messageBytes = new TextEncoder().encode(message);
-    
+
     // Convert wallet address to PublicKey
     const publicKey = new PublicKey(walletAddress);
-    
+
     // Verify the signature
     const isValid = nacl.sign.detached.verify(
       messageBytes,
       signatureBytes,
       publicKey.toBytes()
     );
-    
+
     logger.info('Signature verification', {
       walletAddress,
       isValid,
       messageLength: message.length,
+      signatureFormat: signature.includes('/') || signature.includes('+') ? 'base64' : 'base58',
     });
-    
+
     return {
       isValid,
       walletAddress,
@@ -52,7 +63,7 @@ export function verifyWalletSignature(
       walletAddress,
       signature: signature.substring(0, 10) + '...',
     });
-    
+
     return {
       isValid: false,
       walletAddress,
