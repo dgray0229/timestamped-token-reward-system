@@ -15,7 +15,7 @@ export const API_CONFIG = {
 
 /** Authentication endpoints */
 export const AUTH_ENDPOINTS = {
-  WALLET_CONNECT: '/auth/wallet-connect',
+  WALLET_CONNECT: '/auth/wallet/connect',
   DISCONNECT: '/auth/disconnect',
   REFRESH_TOKEN: '/auth/refresh',
   VERIFY_SESSION: '/auth/verify',

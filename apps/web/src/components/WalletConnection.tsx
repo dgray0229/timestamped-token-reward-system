@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useAppDispatch, useAppSelector } from '../store';
-import { 
-  authenticateWallet, 
+import {
+  authenticateWallet,
   disconnectWallet,
   selectWallet,
   clearErrors
@@ -11,6 +11,7 @@ import {
 import { Button } from './ui/Button';
 import { truncateAddress } from '../lib/utils';
 import { useErrorHandling } from '../hooks/useErrorHandling';
+import { generateWalletMessage } from '../services/wallet';
 
 export function WalletConnection() {
   const dispatch = useAppDispatch();
@@ -58,9 +59,21 @@ export function WalletConnection() {
     }
 
     try {
+      const walletAddress = publicKey.toString();
+
+      // Generate message for signing
+      const { message } = generateWalletMessage(walletAddress);
+
+      // Sign the message with the wallet
+      const messageBytes = new TextEncoder().encode(message);
+      const signatureBytes = await signMessage(messageBytes);
+      const signature = Buffer.from(signatureBytes).toString('base64');
+
+      // Authenticate with the backend
       await dispatch(authenticateWallet({
-        walletAddress: publicKey.toString(),
-        signMessage,
+        walletAddress,
+        signature,
+        message,
       })).unwrap();
 
       handleSuccess('Wallet connected successfully!');

@@ -131,7 +131,7 @@ function Toast({ notification, onClose }: ToastProps) {
         }}
       />
       
-      <style jsx>{`
+      <style>{`
         @keyframes shrink {
           from { width: 100%; }
           to { width: 0%; }

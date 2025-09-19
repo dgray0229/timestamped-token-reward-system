@@ -42,7 +42,7 @@ interface TransactionsState {
   exportError: string | null;
   
   // Real-time updates
-  pendingTransactions: Set<string>;
+  pendingTransactions: string[];
   lastUpdateTime: number | null;
 }
 
@@ -60,7 +60,7 @@ const initialState: TransactionsState = {
   detailsError: null,
   isExporting: false,
   exportError: null,
-  pendingTransactions: new Set(),
+  pendingTransactions: [],
   lastUpdateTime: null,
 };
 
@@ -155,11 +155,13 @@ const transactionsSlice = createSlice({
     
     // Real-time updates
     addPendingTransaction: (state, action: PayloadAction<string>) => {
-      state.pendingTransactions.add(action.payload);
+      if (!state.pendingTransactions.includes(action.payload)) {
+        state.pendingTransactions.push(action.payload);
+      }
     },
-    
+
     removePendingTransaction: (state, action: PayloadAction<string>) => {
-      state.pendingTransactions.delete(action.payload);
+      state.pendingTransactions = state.pendingTransactions.filter(id => id !== action.payload);
     },
     
     updateTransactionStatus: (state, action: PayloadAction<{
@@ -188,7 +190,7 @@ const transactionsSlice = createSlice({
       
       // Remove from pending if status is final
       if (status === 'confirmed' || status === 'failed') {
-        state.pendingTransactions.delete(transactionId);
+        state.pendingTransactions = state.pendingTransactions.filter(id => id !== transactionId);
       }
       
       state.lastUpdateTime = Date.now();
@@ -200,8 +202,8 @@ const transactionsSlice = createSlice({
       state.totalTransactions += 1;
       
       // Add to pending if not confirmed
-      if (action.payload.status === 'pending') {
-        state.pendingTransactions.add(action.payload.id);
+      if (action.payload.status === 'pending' && !state.pendingTransactions.includes(action.payload.id)) {
+        state.pendingTransactions.push(action.payload.id);
       }
     },
   },
@@ -223,10 +225,9 @@ const transactionsSlice = createSlice({
         state.lastUpdateTime = Date.now();
         
         // Update pending transactions based on current data
-        state.pendingTransactions.clear();
-        action.payload.transactions
+        state.pendingTransactions = action.payload.transactions
           .filter(tx => tx.status === 'pending')
-          .forEach(tx => state.pendingTransactions.add(tx.id));
+          .map(tx => tx.id);
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
         state.isLoading = false;

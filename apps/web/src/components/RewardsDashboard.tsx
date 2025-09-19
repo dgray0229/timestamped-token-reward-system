@@ -91,16 +91,15 @@ export function RewardsDashboard() {
     return (
       <div className="space-y-8">
         {/* Main Welcome Card */}
-        <Card className="max-w-2xl mx-auto gradient-bg relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10"></div>
+        <Card className="max-w-2xl mx-auto relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-white via-primary/5 to-accent/10">
           <CardHeader className="text-center relative">
-            <div className="w-16 h-16 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
             </div>
-            <CardTitle className="text-2xl mb-4">Ready to Start Earning?</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle className="text-2xl mb-4 text-foreground font-bold">Ready to Start Earning?</CardTitle>
+            <CardDescription className="text-base text-muted-foreground font-medium">
               Connect your Solana wallet to begin earning timestamped token rewards.
               The longer you wait between claims, the more rewards you accumulate!
             </CardDescription>

@@ -16,11 +16,19 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/types': path.resolve(__dirname, './src/types'),
       '@/styles': path.resolve(__dirname, './src/styles'),
+      // Node.js polyfills for browser
+      buffer: 'buffer',
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
+      util: 'util',
+      assert: 'assert',
     },
   },
   define: {
     // Define global constants for Solana
     global: 'globalThis',
+    // Fix process.env for browser
+    'process.env': {},
   },
   server: {
     port: 5173,
@@ -39,7 +47,22 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@solana/web3.js'],
+    include: [
+      '@solana/web3.js',
+      '@solana/wallet-adapter-base',
+      '@solana/wallet-adapter-react',
+      '@solana/wallet-adapter-wallets',
+      'buffer',
+      'crypto-browserify',
+      'stream-browserify',
+      'util',
+      'assert',
+    ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
   },
   test: {
     globals: true,
