@@ -298,7 +298,8 @@ export const generateSignatureMessage = (
   walletAddress: string,
   nonce: string
 ): string => {
-  return `Please sign this message to authenticate with your wallet.\n\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}`;
+  const timestamp = Date.now();
+  return `Welcome to Reward System!\n\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${timestamp}\n\nThis request will not trigger a blockchain transaction or cost any gas fees.`;
 };
 
 export const formatTokenAmount = (

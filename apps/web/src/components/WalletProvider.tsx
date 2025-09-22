@@ -5,7 +5,6 @@ import {
 } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
-  PhantomWalletAdapter,
   SolflareWalletAdapter,
   TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
@@ -21,8 +20,10 @@ interface WalletProviderProps {
 
 export function WalletProvider({ children }: WalletProviderProps) {
   // Get network from environment or default to devnet
-  const network = (import.meta.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
-  
+  const network =
+    (import.meta.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) ||
+    WalletAdapterNetwork.Devnet;
+
   // Get RPC endpoint
   const endpoint = useMemo(() => {
     const customRpc = import.meta.env.VITE_SOLANA_RPC_URL;
@@ -34,32 +35,28 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   // Configure supported wallets
   const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-      new TorusWalletAdapter(),
-    ],
-    [network],
+    () => [new SolflareWalletAdapter({ network }), new TorusWalletAdapter()],
+    [network]
   );
 
   return (
-    <ConnectionProvider 
+    <ConnectionProvider
       endpoint={endpoint}
       config={{
         commitment: 'confirmed',
-        wsEndpoint: endpoint.replace('https://', 'wss://').replace('http://', 'ws://'),
+        wsEndpoint: endpoint
+          .replace('https://', 'wss://')
+          .replace('http://', 'ws://'),
       }}
     >
-      <SolanaWalletProvider 
-        wallets={wallets} 
+      <SolanaWalletProvider
+        wallets={wallets}
         autoConnect={true}
-        onError={(error) => {
+        onError={error => {
           console.error('Wallet error:', error);
         }}
       >
-        <WalletModalProvider>
-          {children}
-        </WalletModalProvider>
+        <WalletModalProvider>{children}</WalletModalProvider>
       </SolanaWalletProvider>
     </ConnectionProvider>
   );

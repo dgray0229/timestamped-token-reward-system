@@ -25,7 +25,7 @@ let isErrorHandlerSetup = false;
 function shouldIgnoreError(
   message: string,
   filename?: string,
-  error?: Error,
+  error?: Error
 ): boolean {
   const ignoredPatterns = [
     // Browser extension errors
@@ -65,6 +65,9 @@ function shouldIgnoreError(
     /Too Many Requests/,
     /Failed to refresh token/,
     /Request failed/,
+    /429/,
+    /Rate limit/i,
+    /rate.*limit/i,
 
     // React DevTools suggestions (not errors)
     /Download the React DevTools/,
@@ -241,7 +244,10 @@ function logErrorToService(type: string, errorData: GlobalErrorData) {
         sentryRateLimitExpiry = now + 300000; // 5 minutes
         console.info('Error reporting rate limited - pausing for 5 minutes');
       } else {
-        console.warn('Failed to send error to logging service:', error?.message);
+        console.warn(
+          'Failed to send error to logging service:',
+          error?.message
+        );
       }
     });
   } catch (e) {
