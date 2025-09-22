@@ -22,7 +22,7 @@ COPY apps/web ./apps/web
 COPY tsconfig.json ./
 
 # Build shared package
-RUN yarn workspace packages/shared build
+RUN yarn workspace @reward-system/shared build
 
 # Build arguments for environment variables
 ARG VITE_API_URL
@@ -35,7 +35,7 @@ ENV VITE_SOLANA_NETWORK=${VITE_SOLANA_NETWORK}
 ENV VITE_SOLANA_RPC_URL=${VITE_SOLANA_RPC_URL}
 
 # Build web application
-RUN yarn workspace apps/web build
+RUN yarn workspace web build
 
 # Production stage
 FROM nginx:alpine AS production
@@ -67,6 +67,6 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost || exit 1
+  CMD curl -f http://localhost/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

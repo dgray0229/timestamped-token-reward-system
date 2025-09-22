@@ -8,13 +8,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -23,10 +23,10 @@ COPY apps/api ./apps/api
 COPY tsconfig.json ./
 
 # Build shared package
-RUN npm run build --workspace=packages/shared
+RUN yarn workspace @reward-system/shared build
 
 # Build API
-RUN npm run build --workspace=apps/api
+RUN yarn workspace @reward-system/api build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -34,12 +34,12 @@ FROM node:20-alpine AS production
 WORKDIR /app
 
 # Install production dependencies only
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-RUN npm ci --only=production && npm cache clean --force
+RUN yarn install --frozen-lockfile --production && yarn cache clean
 
 # Copy built application
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
@@ -57,10 +57,10 @@ RUN mkdir -p /app/logs && chown -R nextjs:nodejs /app/logs
 USER nextjs
 
 # Railway will inject the PORT variable
-EXPOSE 3001
+EXPOSE ${PORT:-3001}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD curl -f http://localhost:${PORT:-3001}/health || exit 1
 
 CMD ["node", "apps/api/dist/server.js"]

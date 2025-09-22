@@ -25,21 +25,25 @@ railway init
 You'll need to create 4 services in your Railway project:
 
 #### A. PostgreSQL Database
+
 1. Go to your Railway dashboard
 2. Click "Add Service" → "Database" → "PostgreSQL"
 3. Note the generated `DATABASE_URL`
 
 #### B. Redis (Optional but recommended)
+
 1. Click "Add Service" → "Database" → "Redis"
 2. Note the generated `REDIS_URL`
 
 #### C. API Service
+
 1. Click "Add Service" → "GitHub Repo"
 2. Connect your repository
 3. Set root directory to `/` (monorepo root)
 4. Configure environment variables (see below)
 
 #### D. Web Service
+
 1. Click "Add Service" → "GitHub Repo"
 2. Connect the same repository
 3. Set root directory to `/` (monorepo root)
@@ -48,12 +52,13 @@ You'll need to create 4 services in your Railway project:
 ### 3. Environment Variables
 
 #### API Service Variables
+
 Set these in the API service settings:
 
 ```
 NODE_ENV=production
-PORT=3001
-JWT_SECRET=your-secure-jwt-secret-here
+PORT=$PORT
+JWT_SECRET=your-secure-jwt-secret-here-use-a-strong-random-string
 DATABASE_URL=${{PostgreSQL.DATABASE_URL}}
 REDIS_URL=${{Redis.REDIS_URL}}
 SUPABASE_URL=https://your-project.supabase.co
@@ -65,17 +70,27 @@ CORS_ORIGIN=${{web.url}}
 ```
 
 #### Web Service Variables
+
 Set these in the Web service settings:
 
 ```
-VITE_API_URL=${{api.url}}/api
+VITE_API_URL=${{api.url}}/api/v1
 VITE_SOLANA_NETWORK=devnet
 VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
 ```
 
+#### Critical Notes for Railway Deployment:
+
+- **Always use Railway's `$PORT` variable** instead of hardcoded ports
+- **Database connections**: Railway auto-injects `DATABASE_URL` for PostgreSQL services
+- **Service references**: Use `${{service-name.VARIABLE}}` to reference other services
+- **CORS settings**: Web service URL is auto-generated and should be referenced as `${{web.url}}`
+- **Environment variables**: Set these in Railway dashboard under each service's Variables tab
+
 ### 4. Service Dependencies
 
 Configure service dependencies in Railway:
+
 - Web service depends on API service
 - API service depends on PostgreSQL and Redis
 
@@ -88,6 +103,7 @@ Configure service dependencies in Railway:
 ## Deployment Commands
 
 ### Deploy from CLI
+
 ```bash
 # Deploy API service
 railway up --service api
@@ -97,6 +113,7 @@ railway up --service web
 ```
 
 ### Deploy from GitHub
+
 Railway will automatically deploy when you push to your connected branch.
 
 ## Database Setup
@@ -128,6 +145,7 @@ npm run db:setup
 4. **Database connection**: Check DATABASE_URL format and permissions
 
 ### Logs
+
 ```bash
 # View API logs
 railway logs --service api

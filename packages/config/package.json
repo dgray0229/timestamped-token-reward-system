@@ -19,6 +19,7 @@
     "index.js"
   ],
   "scripts": {
+    "build": "echo 'No build required for config package'",
     "lint": "eslint .",
     "clean": "rm -rf dist"
   },

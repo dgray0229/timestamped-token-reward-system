@@ -95,14 +95,12 @@ export function renderWithProviders(
       preloadedState,
     }),
     ...renderOptions
-  }: ExtendedRenderOptions = {},
-) {
+  }: ExtendedRenderOptions = {}
+): ReturnType<typeof render> & { store: any } {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
       <Provider store={store}>
-        <BrowserRouter>
-          {children}
-        </BrowserRouter>
+        <BrowserRouter>{children}</BrowserRouter>
       </Provider>
     );
   }
@@ -120,7 +118,10 @@ export function createMockStore(initialState: Partial<RootState> = {}) {
       transactions: transactionsSlice,
       ui: uiSlice,
     },
-    preloadedState: { ...defaultPreloadedState, ...initialState } as PreloadedState<RootState>,
+    preloadedState: {
+      ...defaultPreloadedState,
+      ...initialState,
+    } as PreloadedState<RootState>,
   });
 }
 
@@ -172,18 +173,19 @@ export function mockApiResponse<T>(data: T, success = true) {
 }
 
 // Helper to wait for async operations
-export const waitFor = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export const waitFor = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 // Custom matchers
 export const customMatchers = {
   toHaveNotification: (received: any, type: string, message?: string) => {
     const notifications = received.getState().ui.notifications;
-    const hasNotification = notifications.some((n: any) => 
-      n.type === type && (!message || n.message.includes(message)),
+    const hasNotification = notifications.some(
+      (n: any) => n.type === type && (!message || n.message.includes(message))
     );
-    
+
     return {
-      message: () => 
+      message: () =>
         `Expected store to ${hasNotification ? 'not ' : ''}have notification of type "${type}"${
           message ? ` with message containing "${message}"` : ''
         }`,

@@ -1,19 +1,19 @@
 # Nixpacks configuration for Railway deployment
 
 [phases.setup]
-nixPkgs = ['nodejs_20']
+nixPkgs = ['nodejs_20', 'yarn']
 
 [phases.install]
 cmds = [
-  'npm ci',
+  'yarn install --frozen-lockfile',
 ]
 
 [phases.build]
 cmds = [
-  'npm run build:packages',
-  'npm run build:api',
-  'npm run build:web',
+  'yarn workspace @reward-system/config build',
+  'yarn workspace @reward-system/shared build',
+  'yarn workspace @reward-system/api build',
 ]
 
 [start]
-cmd = 'npm run start --workspace=apps/api'
+cmd = 'yarn workspace @reward-system/api start'

@@ -22,10 +22,10 @@ COPY apps/api ./apps/api
 COPY tsconfig.json ./
 
 # Build shared package
-RUN yarn workspace packages/shared build
+RUN yarn workspace @reward-system/shared build
 
 # Build API
-RUN yarn workspace apps/api build
+RUN yarn workspace @reward-system/api build
 
 # Production stage
 FROM node:20.19.4-alpine AS production
@@ -62,6 +62,6 @@ EXPOSE 3001
 
 # Health check - Railway will map to the correct port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD curl -f http://localhost:${PORT:-3001}/health || exit 1
 
 CMD ["node", "apps/api/dist/server.js"]
