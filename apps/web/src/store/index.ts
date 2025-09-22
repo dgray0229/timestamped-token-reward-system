@@ -12,10 +12,10 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 // Import reducers
-import walletReducer from './slices/walletSlice';
-import rewardsReducer from './slices/rewardsSlice';
-import transactionsReducer from './slices/transactionsSlice';
-import uiReducer from './slices/uiSlice';
+import walletReducer, { type WalletState } from './slices/walletSlice';
+import rewardsReducer, { type RewardsState } from './slices/rewardsSlice';
+import transactionsReducer, { type TransactionsState } from './slices/transactionsSlice';
+import uiReducer, { type UiState } from './slices/uiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -46,6 +46,7 @@ export const store = configureStore({
 // Export store types for TypeScript
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export type AppStore = typeof store;
 
 // Export typed hooks for better TypeScript integration
 export const useAppDispatch = () => useDispatch<AppDispatch>();

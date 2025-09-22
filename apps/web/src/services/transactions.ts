@@ -36,7 +36,7 @@ export async function getTransactionHistory(
   response.transactions = response.transactions.map(tx => ({
     ...tx,
     timestamp_earned: new Date(tx.timestamp_earned),
-    timestamp_claimed: new Date(tx.timestamp_claimed),
+    timestamp_claimed: tx.timestamp_claimed ? new Date(tx.timestamp_claimed) : undefined,
   }));
   
   return response;
@@ -55,7 +55,7 @@ export async function getTransactionDetails(
   return {
     ...response,
     timestamp_earned: new Date(response.timestamp_earned),
-    timestamp_claimed: new Date(response.timestamp_claimed),
+    timestamp_claimed: response.timestamp_claimed ? new Date(response.timestamp_claimed) : undefined,
   };
 }
 
@@ -226,7 +226,7 @@ export async function subscribeToTransactionUpdates(
           callback({
             transactionId: result.value.transactionId,
             status: result.value.status,
-            blockNumber: result.value.blockNumber,
+            blockNumber: result.value.blockNumber || undefined,
             timestamp: result.value.lastChecked,
           });
         }
@@ -238,8 +238,9 @@ export async function subscribeToTransactionUpdates(
           id: transactionIds[index],
           status: result.status === 'fulfilled' ? result.value.status : 'pending',
         }))
-        .filter(tx => tx.status === 'pending')
-        .map(tx => tx.id);
+        .filter(tx => tx.status === 'pending' && tx.id)
+        .map(tx => tx.id)
+        .filter(id => id !== undefined) as string[];
       
       // Update the list for next poll
       transactionIds.length = 0;

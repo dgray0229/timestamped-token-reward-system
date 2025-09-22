@@ -24,8 +24,10 @@ interface ToastProps {
   notification: {
     id: string;
     type: 'success' | 'error' | 'warning' | 'info';
-    message: string;
+    title: string;
+    message?: string;
     duration?: number;
+    persistent?: boolean;
   };
   onClose: () => void;
 }

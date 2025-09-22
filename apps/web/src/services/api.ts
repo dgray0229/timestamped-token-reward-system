@@ -316,7 +316,6 @@ function transformError(error: AxiosError): ApiError {
       message,
       timestamp,
       requestId,
-      status,
     },
   };
 }

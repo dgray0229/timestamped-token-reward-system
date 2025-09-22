@@ -19,6 +19,7 @@ export function SuccessAnimation({ isVisible, onComplete, amount }: SuccessAnima
       }, 3000);
       return () => clearTimeout(timer);
     }
+    return;
   }, [isVisible, onComplete]);
 
   if (!shouldRender) return null;

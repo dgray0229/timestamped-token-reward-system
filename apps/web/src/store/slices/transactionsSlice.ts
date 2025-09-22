@@ -19,7 +19,7 @@ import type {
 import * as transactionsService from '../../services/transactions';
 
 // Types for transactions state
-interface TransactionsState {
+export interface TransactionsState {
   // Transaction list
   transactions: RewardTransaction[];
   totalTransactions: number;
@@ -173,7 +173,7 @@ const transactionsSlice = createSlice({
       
       // Update transaction in list
       const transactionIndex = state.transactions.findIndex(tx => tx.id === transactionId);
-      if (transactionIndex !== -1) {
+      if (transactionIndex !== -1 && state.transactions[transactionIndex]) {
         state.transactions[transactionIndex].status = status;
         if (signature) {
           state.transactions[transactionIndex].transaction_signature = signature;
@@ -255,10 +255,7 @@ const transactionsSlice = createSlice({
       .addCase(checkTransactionStatus.pending, (state) => {
         // Keep current state during status check
       })
-      .addCase(checkTransactionStatus.fulfilled, (state, action: PayloadAction<{
-        transactionId: string;
-        status: TransactionStatus;
-      }>) => {
+      .addCase(checkTransactionStatus.fulfilled, (state, action) => {
         const { transactionId, status } = action.payload;
         
         // Update transaction status using the updateTransactionStatus reducer logic

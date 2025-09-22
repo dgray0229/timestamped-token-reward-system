@@ -15,12 +15,13 @@ import { generateWalletMessage } from '../services/wallet';
 
 export function WalletConnection() {
   const dispatch = useAppDispatch();
-  const { 
-    isConnected, 
-    isAuthenticated, 
-    user, 
-    isConnecting, 
-    error 
+  const {
+    isConnected,
+    isAuthenticated,
+    user,
+    isConnecting,
+    connectionError,
+    authError
   } = useAppSelector(selectWallet);
   
   const { 
@@ -46,11 +47,12 @@ export function WalletConnection() {
 
   // Handle authentication error display
   useEffect(() => {
+    const error = connectionError || authError;
     if (error) {
       handleWalletError(new Error(error));
       dispatch(clearErrors());
     }
-  }, [error, dispatch, handleWalletError]);
+  }, [connectionError, authError, dispatch, handleWalletError]);
 
   const handleAuthentication = async () => {
     if (!publicKey || !signMessage) {

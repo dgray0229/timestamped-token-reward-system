@@ -44,6 +44,7 @@ export function useErrorHandling() {
     // Show notification to user
     dispatch(addNotification({
       type: 'error',
+      title: 'Error',
       message: userFriendlyMessage,
       duration: 5000,
     }));
@@ -54,7 +55,7 @@ export function useErrorHandling() {
         code: errorCode,
         message: errorMessage,
         originalError: error,
-        context,
+        context: context || '',
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         url: window.location.href,
@@ -77,6 +78,7 @@ export function useErrorHandling() {
 
     dispatch(addNotification({
       type: 'error',
+      title: 'Connection Error',
       message,
       duration: 5000,
     }));
@@ -84,12 +86,13 @@ export function useErrorHandling() {
 
   const handleValidationError = useCallback((errors: Record<string, string>) => {
     const errorMessages = Object.values(errors);
-    const message = errorMessages.length > 1 
+    const message = errorMessages.length > 1
       ? `Please fix the following errors: ${errorMessages.join(', ')}`
       : errorMessages[0] || 'Please check your input and try again.';
 
     dispatch(addNotification({
       type: 'error',
+      title: 'Validation Error',
       message,
       duration: 4000,
     }));
@@ -114,6 +117,7 @@ export function useErrorHandling() {
 
     dispatch(addNotification({
       type: 'error',
+      title: 'Wallet Error',
       message,
       duration: 5000,
     }));
@@ -122,6 +126,7 @@ export function useErrorHandling() {
   const handleSuccess = useCallback((message: string, duration = 3000) => {
     dispatch(addNotification({
       type: 'success',
+      title: 'Success',
       message,
       duration,
     }));
@@ -130,6 +135,7 @@ export function useErrorHandling() {
   const handleInfo = useCallback((message: string, duration = 3000) => {
     dispatch(addNotification({
       type: 'info',
+      title: 'Info',
       message,
       duration,
     }));
@@ -138,6 +144,7 @@ export function useErrorHandling() {
   const handleWarning = useCallback((message: string, duration = 4000) => {
     dispatch(addNotification({
       type: 'warning',
+      title: 'Warning',
       message,
       duration,
     }));

@@ -31,7 +31,7 @@ interface Modal {
   data?: any;
 }
 
-interface UiState {
+export interface UiState {
   // Theme and appearance
   theme: Theme;
   sidebarCollapsed: boolean;
@@ -125,7 +125,9 @@ const uiSlice = createSlice({
     
     closeAllModals: (state) => {
       Object.keys(state.modals).forEach(modalId => {
-        state.modals[modalId].isOpen = false;
+        if (state.modals[modalId]) {
+          state.modals[modalId].isOpen = false;
+        }
       });
     },
     
@@ -154,7 +156,7 @@ const uiSlice = createSlice({
         id: generateNotificationId(),
         type: 'success',
         title: action.payload.title,
-        message: action.payload.message,
+        message: action.payload.message || '',
         duration: 4000,
       };
       state.notifications.push(notification);
@@ -165,9 +167,9 @@ const uiSlice = createSlice({
         id: generateNotificationId(),
         type: 'error',
         title: action.payload.title,
-        message: action.payload.message,
+        message: action.payload.message || '',
         duration: action.payload.persistent ? 0 : 6000,
-        persistent: action.payload.persistent,
+        persistent: action.payload.persistent || false,
       };
       state.notifications.push(notification);
     },
@@ -177,7 +179,7 @@ const uiSlice = createSlice({
         id: generateNotificationId(),
         type: 'warning',
         title: action.payload.title,
-        message: action.payload.message,
+        message: action.payload.message || '',
         duration: 5000,
       };
       state.notifications.push(notification);
@@ -188,7 +190,7 @@ const uiSlice = createSlice({
         id: generateNotificationId(),
         type: 'info',
         title: action.payload.title,
-        message: action.payload.message,
+        message: action.payload.message || '',
         duration: 4000,
       };
       state.notifications.push(notification);

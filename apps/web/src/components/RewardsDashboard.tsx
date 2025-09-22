@@ -24,11 +24,11 @@ export function RewardsDashboard() {
   const { isAuthenticated } = useAppSelector(selectWallet);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [claimedAmount, setClaimedAmount] = useState('');
-  const { 
-    availableRewards, 
-    isLoading: rewardsLoading, 
+  const {
+    availableRewards,
+    isLoadingRewards,
     isClaiming,
-    error: rewardsError 
+    rewardsError
   } = useAppSelector(selectRewards);
   const { 
     transactions, 
@@ -58,6 +58,7 @@ export function RewardsDashboard() {
     if (!availableRewards || parseFloat(availableRewards.available_amount) <= 0) {
       dispatch(addNotification({
         type: 'warning',
+        title: 'No Rewards Available',
         message: 'No rewards available to claim',
         duration: 3000,
       }));
@@ -75,6 +76,7 @@ export function RewardsDashboard() {
       // Also show notification
       dispatch(addNotification({
         type: 'success',
+        title: 'Claim Successful',
         message: `Successfully claimed ${amount} tokens!`,
         duration: 5000,
       }));
@@ -352,7 +354,7 @@ export function RewardsDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-semibold text-lg text-green-600">
-                            +{formatCurrency(transaction.amount)}
+                            +{formatCurrency(transaction.reward_amount)}
                           </h4>
                           <p className="text-sm text-muted-foreground">
                             Claimed {formatTimeAgo(transaction.timestamp_earned)}
@@ -377,7 +379,7 @@ export function RewardsDashboard() {
                       {transaction.transaction_signature && (
                         <div className="mt-2 flex items-center space-x-2">
                           <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded">
-                            {truncateAddress(transaction.transaction_signature, 6, 6)}
+                            {transaction.transaction_signature ? truncateAddress(transaction.transaction_signature, 6, 6) : 'Pending'}
                           </span>
                           <button
                             onClick={() => navigator.clipboard.writeText(transaction.transaction_signature)}

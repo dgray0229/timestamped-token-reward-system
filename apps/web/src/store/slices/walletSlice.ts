@@ -14,7 +14,7 @@ import type { User, WalletConnectResponse } from '@reward-system/shared';
 import * as walletService from '../../services/wallet';
 
 // Types for wallet state
-interface WalletState {
+export interface WalletState {
   // Connection state
   isConnected: boolean;
   isConnecting: boolean;

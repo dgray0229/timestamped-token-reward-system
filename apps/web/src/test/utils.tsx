@@ -3,6 +3,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { configureStore, PreloadedState } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 
 // Import your store and reducers
 import { RootState, AppStore } from '../store';
@@ -17,10 +18,61 @@ interface ExtendedRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   store?: AppStore;
 }
 
+const defaultPreloadedState: Partial<RootState> = {
+  wallet: {
+    isConnected: false,
+    isConnecting: false,
+    connectionError: null,
+    user: null,
+    isAuthenticated: false,
+    sessionToken: null,
+    isAuthenticating: false,
+    authError: null,
+    walletName: null,
+    publicKey: null,
+  },
+  rewards: {
+    availableRewards: null,
+    isLoadingRewards: false,
+    rewardsError: null,
+    lastUpdated: null,
+    isClaiming: false,
+    claimError: null,
+    pendingClaimId: null,
+    totalEarned: '0',
+    totalClaims: 0,
+    successRate: 0,
+    autoClaimEnabled: false,
+    minClaimAmount: '1000000',
+  },
+  transactions: {
+    transactions: [],
+    totalTransactions: 0,
+    currentPage: 1,
+    totalPages: 1,
+    isLoading: false,
+    error: null,
+    selectedTransaction: null,
+    exportStatus: 'idle',
+    exportError: null,
+    isExporting: false,
+    filters: {},
+  },
+  ui: {
+    theme: 'system',
+    sidebarCollapsed: false,
+    modals: {},
+    notifications: [],
+    loadingStates: {},
+    activeTab: 'overview',
+    breadcrumbs: [],
+  },
+};
+
 export function renderWithProviders(
   ui: React.ReactElement,
   {
-    preloadedState = {},
+    preloadedState = defaultPreloadedState,
     // Automatically create a store instance if no store was passed in
     store = configureStore({
       reducer: {
@@ -57,7 +109,7 @@ export function createMockStore(initialState: Partial<RootState> = {}) {
       transactions: transactionsSlice,
       ui: uiSlice,
     },
-    preloadedState: initialState as PreloadedState<RootState>,
+    preloadedState: { ...defaultPreloadedState, ...initialState } as PreloadedState<RootState>,
   });
 }
 

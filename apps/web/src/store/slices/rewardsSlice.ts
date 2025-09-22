@@ -14,7 +14,7 @@ import type { AvailableRewards, ClaimRewardResponse } from '@reward-system/share
 import * as rewardsService from '../../services/rewards';
 
 // Types for rewards state
-interface RewardsState {
+export interface RewardsState {
   // Available rewards
   availableRewards: AvailableRewards | null;
   isLoadingRewards: boolean;
@@ -199,9 +199,7 @@ const rewardsSlice = createSlice({
         // Update available rewards to zero after successful claim
         if (state.availableRewards) {
           state.availableRewards.available_amount = '0';
-          state.availableRewards.next_claim_available_at = new Date(
-            Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
-          );
+          state.availableRewards.next_claim_available_in = 24; // 24 hours from now
         }
         
         // Increment total claims
