@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Shared TypeScript types, constants, and utilities",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,7 +15,9 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "yarn clean && yarn build:compile && yarn build:fix",
+    "build:compile": "npx tsc src/all-types.ts --declaration --outDir dist --skipLibCheck --module ES2022 --target ES2022 && npx tsc src/index.ts --declaration --outDir dist --skipLibCheck --module ES2022 --target ES2022",
+    "build:fix": "node scripts/fix-imports.cjs",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
