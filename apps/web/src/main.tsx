@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { store } from './store';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/globals.css';
 
 // Initialize global error handling
@@ -18,28 +19,11 @@ setupGlobalErrorHandler();
 setupPerformanceMonitoring();
 setupNetworkMonitoring();
 
-// Solana wallet context providers
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import {
-  SolflareWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+// Enhanced Solana provider with error handling
+import SolanaProviderWrapper from './components/SolanaProviderWrapper';
 
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
-
-// Get network from environment
-const network = (import.meta.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
-
-// Get RPC endpoint
-const endpoint = import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
-
-// Initialize wallet adapters (Phantom auto-registers as a Standard Wallet)
-const wallets = [
-  new SolflareWalletAdapter({ network }),
-];
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -47,21 +31,21 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <Provider store={store}>
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
+    <ErrorBoundary>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <Provider store={store}>
+          <ErrorBoundary fallback={<div className="text-center p-4">Redux store error - please reload</div>}>
+            <SolanaProviderWrapper>
               <App />
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </Provider>
-    </BrowserRouter>
+            </SolanaProviderWrapper>
+          </ErrorBoundary>
+        </Provider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

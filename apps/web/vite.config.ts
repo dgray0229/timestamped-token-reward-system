@@ -1,43 +1,73 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Use proper Node.js polyfills plugin
+    nodePolyfills({
+      // Whether to polyfill `node:` protocol imports.
+      protocolImports: true,
+      // Polyfills to include
+      include: ['buffer', 'process', 'util', 'stream', 'crypto', 'assert'],
+      // Polyfills to exclude (use false to disable all polyfills)
+      exclude: [],
+      // Whether to make `global` available in the browser
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+    }),
     {
-      name: 'node-polyfill',
+      name: 'enhanced-globals',
       config(config) {
         config.define = config.define || {};
+        // Ensure these are available immediately
         config.define.global = 'globalThis';
-        // Only define process.env, not the entire process object
-        config.define['process.env'] = '{}';
+        config.define['process.env'] = 'process.env';
       },
       transformIndexHtml(html) {
         return html.replace(
           '<head>',
           `<head>
   <script>
-    // Set up global polyfills for Node.js compatibility
-    if (typeof global === "undefined") { 
-      var global = globalThis; 
+    // Synchronous global setup for immediate availability
+    if (typeof global === "undefined") {
+      globalThis.global = globalThis;
     }
-    // Only polyfill process if it's completely undefined
+
+    // Enhanced process polyfill with better error handling
     if (typeof process === "undefined") {
-      var process = { env: {} };
+      globalThis.process = {
+        env: {},
+        version: '',
+        platform: 'browser',
+        nextTick: (fn, ...args) => setTimeout(() => fn(...args), 0),
+        exit: () => {},
+        cwd: () => '/',
+        chdir: () => {},
+        stderr: { write: () => {} },
+        stdout: { write: () => {} },
+        stdin: { read: () => null }
+      };
     } else if (process && !process.env) {
       process.env = {};
     }
-  </script>
-  <script type="module">
-    // Load Buffer polyfill
-    import('buffer').then(module => {
-      globalThis.Buffer = module.Buffer;
-    }).catch(() => {
-      // Fallback if buffer module fails to load
-      console.warn('Buffer polyfill not available');
-    });
+
+    // Request/Response polyfills for better Solana compatibility
+    if (typeof Request === "undefined") {
+      globalThis.Request = class Request {};
+    }
+    if (typeof Response === "undefined") {
+      globalThis.Response = class Response {};
+    }
+    if (typeof Headers === "undefined") {
+      globalThis.Headers = class Headers {};
+    }
   </script>`
         );
       },

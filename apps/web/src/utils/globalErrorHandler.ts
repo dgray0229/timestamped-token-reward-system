@@ -33,6 +33,8 @@ function shouldIgnoreError(
     /moz-extension:\/\//,
     /safari-extension:\/\//,
     /extension\//,
+    /^chrome\./,
+    /^moz\./,
 
     // Common extension error messages
     /Cannot redefine property: webdriver/,
@@ -43,30 +45,60 @@ function shouldIgnoreError(
     /A listener indicated an asynchronous response/,
     /Cannot read properties of undefined \(reading 'isCheckout'\)/,
     /Receiving end does not exist/,
+    /The message port closed before a response was received/,
 
     // YouTube ad blocker specific
     /YT Ad Blocker/,
     /youtube-ad-blocker/,
     /youtube-ad-skipper/,
+    /▶YT Ad Blocker/,
 
     // Wallet extension errors
     /Wallet error/,
     /webdriver/,
+    /phantom/i,
+    /metamask/i,
+    /wallet adapter/i,
 
-    // Sentry rate limiting (we handle this separately)
+    // Sentry rate limiting and monitoring errors
     /sentry\.io.*429/,
+    /Too Many Requests/,
+    /Failed to refresh token/,
+    /Request failed/,
 
     // React DevTools suggestions (not errors)
     /Download the React DevTools/,
+    /React DevTools/,
 
     // Host validation errors from extensions
     /Host validation failed/,
     /Host is not supported/,
+    /Host is not valid or supported/,
     /Host is not in insights whitelist/,
+    /READ - Host validation failed/,
 
     // Generic extension communication errors
     /message channel closed/,
     /runtime\.lastError/,
+    /Extension context invalidated/,
+    /Could not establish connection/,
+
+    // Buffer and polyfill warnings (expected during startup)
+    /Buffer polyfill not available/,
+    /polyfill/i,
+
+    // Network and CORS errors that are expected
+    /NetworkError/,
+    /CORS/,
+    /Failed to fetch/,
+
+    // Script loading errors from extensions
+    /Loading chunk \d+ failed/,
+    /Loading CSS chunk/,
+
+    // Third-party script errors
+    /Script error/,
+    /Non-Error promise rejection captured/,
   ];
 
   const errorString = `${message} ${filename} ${error?.message || ''}`;
@@ -158,14 +190,27 @@ export function setupGlobalErrorHandler() {
   console.log('✅ Global error handler initialized');
 }
 
-// Rate limiting for error reporting
+// Enhanced rate limiting for error reporting
 let errorReportCount = 0;
 let errorReportWindow = Date.now();
-const MAX_ERRORS_PER_MINUTE = 10;
+const MAX_ERRORS_PER_MINUTE = 5; // Reduced from 10 to be more conservative
+let sentryRateLimited = false;
+let sentryRateLimitExpiry = 0;
 
 function logErrorToService(type: string, errorData: GlobalErrorData) {
-  // Rate limiting to prevent spam to error service
   const now = Date.now();
+
+  // Check if Sentry is rate limited
+  if (sentryRateLimited && now < sentryRateLimitExpiry) {
+    return; // Skip reporting during rate limit period
+  }
+
+  // Reset Sentry rate limit if expired
+  if (now >= sentryRateLimitExpiry) {
+    sentryRateLimited = false;
+  }
+
+  // Rate limiting to prevent spam to error service
   if (now - errorReportWindow > 60000) {
     // Reset window every minute
     errorReportCount = 0;
@@ -178,9 +223,6 @@ function logErrorToService(type: string, errorData: GlobalErrorData) {
 
   errorReportCount++;
 
-  // In a real application, send to error tracking service
-  // Example services: Sentry, LogRocket, Bugsnag, etc.
-
   try {
     // Example: Send to your own error logging endpoint
     fetch('/api/errors/client', {
@@ -192,9 +234,15 @@ function logErrorToService(type: string, errorData: GlobalErrorData) {
         type,
         ...errorData,
       }),
-    }).catch(() => {
-      // Silently fail if error logging fails
-      console.warn('Failed to send error to logging service');
+    }).catch((error: any) => {
+      // Handle rate limiting from external services
+      if (error?.status === 429) {
+        sentryRateLimited = true;
+        sentryRateLimitExpiry = now + 300000; // 5 minutes
+        console.info('Error reporting rate limited - pausing for 5 minutes');
+      } else {
+        console.warn('Failed to send error to logging service:', error?.message);
+      }
     });
   } catch (e) {
     // Prevent infinite error loops

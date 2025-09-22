@@ -96,14 +96,14 @@ const createApiClient = (): AxiosInstance => {
         );
       }
 
-      // Handle 401 Unauthorized with token refresh
+      // Handle 401 Unauthorized with smart token refresh
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
         try {
-          // Attempt to refresh token
+          // Attempt to refresh token with circuit breaker
           const refreshResult = await refreshAuthToken();
-          if (refreshResult.success) {
+          if (refreshResult.success && refreshResult.token) {
             // Update Authorization header and retry original request
             originalRequest.headers.Authorization = `Bearer ${refreshResult.token}`;
             return client(originalRequest);
@@ -112,10 +112,15 @@ const createApiClient = (): AxiosInstance => {
           console.warn('Token refresh failed:', refreshError);
         }
 
-        // If refresh fails, clear session and trigger logout
+        // If refresh fails, clear session gracefully
+        console.info('Authentication session expired - clearing local storage');
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('user');
-        window.dispatchEvent(new CustomEvent('auth:logout'));
+
+        // Only trigger logout event if we're not already on a login page
+        if (!window.location.pathname.includes('/login')) {
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+        }
       }
 
       // Transform and enhance error information
@@ -137,43 +142,84 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
+// Circuit breaker for token refresh to prevent infinite loops
+let refreshPromise: Promise<{ success: boolean; token?: string }> | null = null;
+let refreshAttempts = 0;
+let lastRefreshAttempt = 0;
+const MAX_REFRESH_ATTEMPTS = 3;
+const REFRESH_COOLDOWN = 30000; // 30 seconds
+
 /**
- * Refresh authentication token
+ * Refresh authentication token with circuit breaker pattern
  */
 async function refreshAuthToken(): Promise<{
   success: boolean;
   token?: string;
 }> {
-  try {
-    const currentToken = localStorage.getItem('sessionToken');
-    if (!currentToken) {
-      return { success: false };
-    }
+  const now = Date.now();
 
-    // Make refresh request without interceptors to avoid infinite loop
-    const response = await axios.post(
-      `${API_BASE_URL}/auth/refresh`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: API_TIMEOUT,
-      },
-    );
-
-    if (response.data?.data?.session_token) {
-      const newToken = response.data.data.session_token;
-      localStorage.setItem('sessionToken', newToken);
-      return { success: true, token: newToken };
-    }
-
-    return { success: false };
-  } catch (error) {
-    console.warn('Token refresh request failed:', error);
+  // Check cooldown period
+  if (now - lastRefreshAttempt < REFRESH_COOLDOWN && refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+    console.warn('Token refresh rate limited - too many recent attempts');
     return { success: false };
   }
+
+  // Reset attempts after cooldown
+  if (now - lastRefreshAttempt > REFRESH_COOLDOWN) {
+    refreshAttempts = 0;
+  }
+
+  // Return existing promise if refresh is already in progress
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  lastRefreshAttempt = now;
+  refreshAttempts++;
+
+  refreshPromise = (async () => {
+    try {
+      const currentToken = localStorage.getItem('sessionToken');
+      if (!currentToken) {
+        return { success: false };
+      }
+
+      // Make refresh request without interceptors to avoid infinite loop
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/refresh`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: API_TIMEOUT,
+        },
+      );
+
+      if (response.data?.data?.session_token) {
+        const newToken = response.data.data.session_token;
+        localStorage.setItem('sessionToken', newToken);
+        refreshAttempts = 0; // Reset on success
+        return { success: true, token: newToken };
+      }
+
+      return { success: false };
+    } catch (error: any) {
+      console.warn('Token refresh request failed:', error?.message || error);
+
+      // Don't retry on certain errors
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        refreshAttempts = MAX_REFRESH_ATTEMPTS; // Max out attempts
+      }
+
+      return { success: false };
+    } finally {
+      refreshPromise = null; // Clear the promise
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
