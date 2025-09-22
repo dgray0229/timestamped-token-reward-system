@@ -1,6 +1,6 @@
 /**
  * API Service - Base HTTP client configuration
- * 
+ *
  * This service provides the foundation for all API communication with:
  * - Axios configuration with interceptors
  * - Request/response logging and error handling
@@ -9,11 +9,17 @@
  * - Comprehensive error transformation and user feedback
  */
 
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from 'axios';
 import type { ApiError, ApiResponse } from '@reward-system/shared';
 
 // API configuration from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000', 10);
 
 /**
@@ -30,7 +36,7 @@ const createApiClient = (): AxiosInstance => {
 
   // Request interceptor for authentication and logging
   client.interceptors.request.use(
-    (config) => {
+    config => {
       // Add authentication token if available
       const token = localStorage.getItem('sessionToken');
       if (token) {
@@ -42,15 +48,18 @@ const createApiClient = (): AxiosInstance => {
 
       // Log request in development
       if (import.meta.env.DEV) {
-        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-          headers: config.headers,
-          data: config.data,
-        });
+        console.log(
+          `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`,
+          {
+            headers: config.headers,
+            data: config.data,
+          },
+        );
       }
 
       return config;
     },
-    (error) => {
+    error => {
       console.error('Request interceptor error:', error);
       return Promise.reject(error);
     },
@@ -61,27 +70,49 @@ const createApiClient = (): AxiosInstance => {
     (response: AxiosResponse<ApiResponse>) => {
       // Log response in development
       if (import.meta.env.DEV) {
-        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-          status: response.status,
-          data: response.data,
-        });
+        console.log(
+          `✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`,
+          {
+            status: response.status,
+            data: response.data,
+          },
+        );
       }
 
       return response;
     },
-    (error: AxiosError) => {
+    async (error: AxiosError) => {
+      const originalRequest = error.config as any;
+
       // Log error in development
       if (import.meta.env.DEV) {
-        console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message,
-        });
+        console.error(
+          `❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+          {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+          },
+        );
       }
 
-      // Handle specific error cases
-      if (error.response?.status === 401) {
-        // Unauthorized - clear session and trigger logout
+      // Handle 401 Unauthorized with token refresh
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        try {
+          // Attempt to refresh token
+          const refreshResult = await refreshAuthToken();
+          if (refreshResult.success) {
+            // Update Authorization header and retry original request
+            originalRequest.headers.Authorization = `Bearer ${refreshResult.token}`;
+            return client(originalRequest);
+          }
+        } catch (refreshError) {
+          console.warn('Token refresh failed:', refreshError);
+        }
+
+        // If refresh fails, clear session and trigger logout
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('user');
         window.dispatchEvent(new CustomEvent('auth:logout'));
@@ -103,7 +134,46 @@ export const apiClient = createApiClient();
  * Generate unique request ID for tracking
  */
 function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+}
+
+/**
+ * Refresh authentication token
+ */
+async function refreshAuthToken(): Promise<{
+  success: boolean;
+  token?: string;
+}> {
+  try {
+    const currentToken = localStorage.getItem('sessionToken');
+    if (!currentToken) {
+      return { success: false };
+    }
+
+    // Make refresh request without interceptors to avoid infinite loop
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/refresh`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: API_TIMEOUT,
+      },
+    );
+
+    if (response.data?.data?.session_token) {
+      const newToken = response.data.data.session_token;
+      localStorage.setItem('sessionToken', newToken);
+      return { success: true, token: newToken };
+    }
+
+    return { success: false };
+  } catch (error) {
+    console.warn('Token refresh request failed:', error);
+    return { success: false };
+  }
 }
 
 /**
@@ -153,14 +223,23 @@ export const api = {
   get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
     apiRequest<T>({ method: 'GET', url, ...config }),
 
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiRequest<T>({ method: 'POST', url, data, ...config }),
+  post: <T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> => apiRequest<T>({ method: 'POST', url, data, ...config }),
 
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiRequest<T>({ method: 'PUT', url, data, ...config }),
+  put: <T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> => apiRequest<T>({ method: 'PUT', url, data, ...config }),
 
-  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiRequest<T>({ method: 'PATCH', url, data, ...config }),
+  patch: <T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> => apiRequest<T>({ method: 'PATCH', url, data, ...config }),
 
   delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
     apiRequest<T>({ method: 'DELETE', url, ...config }),
@@ -210,7 +289,8 @@ export function clearAuthToken() {
  * Transform axios error into standardized API error format
  */
 function transformError(error: AxiosError): ApiError {
-  const requestId = error.config?.headers?.['X-Request-ID'] as string || 'unknown';
+  const requestId =
+    (error.config?.headers?.['X-Request-ID'] as string) || 'unknown';
   const timestamp = new Date().toISOString();
 
   // Network/connection errors
@@ -225,12 +305,16 @@ function transformError(error: AxiosError): ApiError {
         },
       };
     }
-    
-    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+
+    if (
+      error.code === 'ERR_NETWORK' ||
+      error.message.includes('Network Error')
+    ) {
       return {
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network connection failed. Please check your internet connection.',
+          message:
+            'Network connection failed. Please check your internet connection.',
           timestamp,
           requestId,
         },
@@ -307,7 +391,8 @@ function transformError(error: AxiosError): ApiError {
       break;
     default:
       code = 'HTTP_ERROR';
-      message = responseData?.message || error.message || `HTTP Error ${status}`;
+      message =
+        responseData?.message || error.message || `HTTP Error ${status}`;
   }
 
   return {

@@ -7,17 +7,37 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'buffer-polyfill',
-      config(config, { command }) {
-        if (command === 'serve') {
-          config.define = config.define || {};
-          config.define.global = 'globalThis';
-        }
+      name: 'node-polyfill',
+      config(config) {
+        config.define = config.define || {};
+        config.define.global = 'globalThis';
+        // Only define process.env, not the entire process object
+        config.define['process.env'] = '{}';
       },
       transformIndexHtml(html) {
         return html.replace(
           '<head>',
-          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>'
+          `<head>
+  <script>
+    // Set up global polyfills for Node.js compatibility
+    if (typeof global === "undefined") { 
+      var global = globalThis; 
+    }
+    // Only polyfill process if it's completely undefined
+    if (typeof process === "undefined") {
+      var process = { env: {} };
+    } else if (process && !process.env) {
+      process.env = {};
+    }
+  </script>
+  <script type="module">
+    try {
+      const { Buffer } = await import("buffer");
+      globalThis.Buffer = Buffer;
+    } catch (e) {
+      console.warn("Failed to load Buffer polyfill:", e);
+    }
+  </script>`,
         );
       },
     },
@@ -36,7 +56,7 @@ export default defineConfig({
       // Explicit alias for shared package
       '@reward-system/shared': path.resolve(
         __dirname,
-        '../../packages/shared/dist'
+        '../../packages/shared/dist',
       ),
       // Node.js polyfills for browser
       buffer: 'buffer',

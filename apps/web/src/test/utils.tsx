@@ -95,7 +95,7 @@ export function renderWithProviders(
       preloadedState,
     }),
     ...renderOptions
-  }: ExtendedRenderOptions = {}
+  }: ExtendedRenderOptions = {},
 ): ReturnType<typeof render> & { store: any } {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
@@ -181,7 +181,7 @@ export const customMatchers = {
   toHaveNotification: (received: any, type: string, message?: string) => {
     const notifications = received.getState().ui.notifications;
     const hasNotification = notifications.some(
-      (n: any) => n.type === type && (!message || n.message.includes(message))
+      (n: any) => n.type === type && (!message || n.message.includes(message)),
     );
 
     return {
