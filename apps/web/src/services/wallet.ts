@@ -1,6 +1,6 @@
 /**
  * Wallet Service - Wallet authentication and management
- * 
+ *
  * This service handles wallet-based authentication with:
  * - Wallet signature verification
  * - User session management
@@ -9,15 +9,15 @@
  */
 
 import { api, setAuthToken } from './api';
-import type { 
-  User, 
-  WalletConnectRequest, 
-  WalletConnectResponse, 
+import type {
+  User,
+  WalletConnectRequest,
+  WalletConnectResponse,
 } from '@reward-system/shared';
-import { 
-  AUTH_ENDPOINTS, 
+import {
+  AUTH_ENDPOINTS,
   generateNonce,
-  generateSignatureMessage, 
+  generateSignatureMessage,
 } from '@reward-system/shared';
 
 /**
@@ -26,7 +26,7 @@ import {
 export async function authenticateWallet(
   walletAddress: string,
   signature: string,
-  message: string,
+  message: string
 ): Promise<WalletConnectResponse> {
   const request: WalletConnectRequest = {
     wallet_address: walletAddress,
@@ -36,7 +36,7 @@ export async function authenticateWallet(
 
   const response = await api.post<WalletConnectResponse>(
     AUTH_ENDPOINTS.WALLET_CONNECT,
-    request,
+    request
   );
 
   // Store authentication data
@@ -58,7 +58,7 @@ export function generateWalletMessage(walletAddress: string): {
 } {
   const nonce = generateNonce();
   const timestamp = Date.now();
-  const message = generateSignatureMessage(walletAddress, nonce);
+  const message = generateSignatureMessage(walletAddress, nonce, timestamp);
 
   return { message, nonce, timestamp };
 }
@@ -85,7 +85,7 @@ export async function disconnectWallet(): Promise<void> {
  */
 export async function refreshSession(): Promise<WalletConnectResponse> {
   const response = await api.post<WalletConnectResponse>(
-    AUTH_ENDPOINTS.REFRESH_TOKEN,
+    AUTH_ENDPOINTS.REFRESH_TOKEN
   );
 
   // Update stored authentication data
@@ -100,9 +100,14 @@ export async function refreshSession(): Promise<WalletConnectResponse> {
 /**
  * Verify current session is valid
  */
-export async function verifySession(): Promise<{ valid: boolean; user?: User }> {
+export async function verifySession(): Promise<{
+  valid: boolean;
+  user?: User;
+}> {
   try {
-    const response = await api.get<{ user: User }>(AUTH_ENDPOINTS.VERIFY_SESSION);
+    const response = await api.get<{ user: User }>(
+      AUTH_ENDPOINTS.VERIFY_SESSION
+    );
     return { valid: true, user: response.user };
   } catch (error) {
     return { valid: false };
@@ -155,7 +160,7 @@ export async function initializeAuth(): Promise<{
   try {
     // Verify session is still valid
     const sessionCheck = await verifySession();
-    
+
     if (sessionCheck.valid && sessionCheck.user) {
       // Update stored user data in case it changed
       localStorage.setItem('user', JSON.stringify(sessionCheck.user));
@@ -181,10 +186,10 @@ export async function updateUserProfile(updates: {
   email?: string;
 }): Promise<User> {
   const response = await api.put<User>('/users/profile', updates);
-  
+
   // Update stored user data
   localStorage.setItem('user', JSON.stringify(response));
-  
+
   return response;
 }
 
@@ -193,7 +198,7 @@ export async function updateUserProfile(updates: {
  */
 export async function deleteUserAccount(): Promise<void> {
   await api.delete('/users/account');
-  
+
   // Clear all local data after successful deletion
   await disconnectWallet();
 }
@@ -208,7 +213,7 @@ export function setupWalletEventListeners() {
   });
 
   // Listen for storage changes (multi-tab support)
-  window.addEventListener('storage', (event) => {
+  window.addEventListener('storage', event => {
     if (event.key === 'sessionToken' && !event.newValue) {
       // Token was cleared in another tab
       window.dispatchEvent(new CustomEvent('auth:logout'));
@@ -229,6 +234,6 @@ export async function exportUserData(): Promise<Blob> {
   const response = await api.get('/users/export', {
     responseType: 'blob',
   });
-  
+
   return response;
 }

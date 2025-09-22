@@ -296,10 +296,11 @@ export const generateNonce = (length: number = 32): string => {
 
 export const generateSignatureMessage = (
   walletAddress: string,
-  nonce: string
+  nonce: string,
+  timestamp?: number
 ): string => {
-  const timestamp = Date.now();
-  return `Welcome to Reward System!\n\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${timestamp}\n\nThis request will not trigger a blockchain transaction or cost any gas fees.`;
+  const messageTimestamp = timestamp ?? Date.now();
+  return `Welcome to Reward System!\n\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${messageTimestamp}\n\nThis request will not trigger a blockchain transaction or cost any gas fees.`;
 };
 
 export const formatTokenAmount = (

@@ -26,25 +26,37 @@ import type {
 
 const router = Router();
 
-router.post('/wallet/connect',
+router.post(
+  '/wallet/connect',
   authRateLimit,
   validateRequest({ body: schemas.walletConnect }),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { wallet_address, signature, message }: WalletConnectRequest = req.body;
+    const { wallet_address, signature, message }: WalletConnectRequest =
+      req.body;
 
     // Validate wallet address format
     if (!isValidSolanaAddress(wallet_address)) {
-      throw createError('Invalid Solana wallet address', 400, 'INVALID_WALLET_ADDRESS');
+      throw createError(
+        'Invalid Solana wallet address',
+        400,
+        'INVALID_WALLET_ADDRESS'
+      );
     }
 
     // Parse and validate message components
     const messageLines = message.split('\n');
     const walletLine = messageLines.find(line => line.startsWith('Wallet:'));
     const nonceLine = messageLines.find(line => line.startsWith('Nonce:'));
-    const timestampLine = messageLines.find(line => line.startsWith('Timestamp:'));
+    const timestampLine = messageLines.find(line =>
+      line.startsWith('Timestamp:')
+    );
 
     if (!walletLine || !nonceLine || !timestampLine) {
-      throw createError('Invalid message format', 400, 'INVALID_MESSAGE_FORMAT');
+      throw createError(
+        'Invalid message format',
+        400,
+        'INVALID_MESSAGE_FORMAT'
+      );
     }
 
     const messageWallet = walletLine.split('Wallet: ')[1];
@@ -52,17 +64,34 @@ router.post('/wallet/connect',
 
     // Verify wallet address matches
     if (messageWallet !== wallet_address) {
-      throw createError('Wallet address mismatch', 400, 'WALLET_ADDRESS_MISMATCH');
+      throw createError(
+        'Wallet address mismatch',
+        400,
+        'WALLET_ADDRESS_MISMATCH'
+      );
     }
 
     // Verify timestamp is recent (5 minutes)
     if (!isValidTimestamp(messageTimestamp, 300000)) {
-      throw createError('Message timestamp is expired or invalid', 400, 'INVALID_TIMESTAMP');
+      throw createError(
+        'Message timestamp is expired or invalid',
+        400,
+        'INVALID_TIMESTAMP'
+      );
     }
 
     // Verify signature
-    const verificationResult = verifyWalletSignature(signature, message, wallet_address);
+    const verificationResult = verifyWalletSignature(
+      signature,
+      message,
+      wallet_address
+    );
     if (!verificationResult.isValid) {
+      logger.error('Wallet signature verification failed', {
+        walletAddress: wallet_address,
+        messagePreview: message.substring(0, 100) + '...',
+        signaturePreview: signature.substring(0, 20) + '...',
+      });
       throw createError('Invalid signature', 401, 'INVALID_SIGNATURE');
     }
 
@@ -95,15 +124,25 @@ router.post('/wallet/connect',
 
       if (insertError) {
         logger.error('Failed to create user', { error: insertError });
-        throw createError('Failed to create user account', 500, 'USER_CREATION_FAILED');
+        throw createError(
+          'Failed to create user account',
+          500,
+          'USER_CREATION_FAILED'
+        );
       }
 
       user = newUser;
-      logger.info('New user created', { userId: user.id, walletAddress: wallet_address });
+      logger.info('New user created', {
+        userId: user.id,
+        walletAddress: wallet_address,
+      });
     } else {
       // Use existing user
       user = existingUser;
-      logger.info('User logged in', { userId: user.id, walletAddress: wallet_address });
+      logger.info('User logged in', {
+        userId: user.id,
+        walletAddress: wallet_address,
+      });
     }
 
     // Generate session token
@@ -116,14 +155,20 @@ router.post('/wallet/connect',
         user_id: user.id,
         wallet_address: user.wallet_address,
         session_token: sessionToken,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        expires_at: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString(), // 7 days
         is_active: true,
         last_activity: new Date().toISOString(),
       });
 
     if (sessionError) {
       logger.error('Failed to create session', { error: sessionError });
-      throw createError('Failed to create session', 500, 'SESSION_CREATION_FAILED');
+      throw createError(
+        'Failed to create session',
+        500,
+        'SESSION_CREATION_FAILED'
+      );
     }
 
     const response: WalletConnectResponse = {
@@ -148,7 +193,8 @@ router.post('/wallet/connect',
   })
 );
 
-router.post('/disconnect',
+router.post(
+  '/disconnect',
   authenticateToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.userId!;
@@ -173,7 +219,8 @@ router.post('/disconnect',
   })
 );
 
-router.post('/refresh',
+router.post(
+  '/refresh',
   authenticateToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user!;
@@ -186,7 +233,9 @@ router.post('/refresh',
       .from('user_sessions')
       .update({
         session_token: sessionToken,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         last_activity: new Date().toISOString(),
       })
       .eq('user_id', user.id)
@@ -219,7 +268,8 @@ router.post('/refresh',
   })
 );
 
-router.get('/verify',
+router.get(
+  '/verify',
   authenticateToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user!;
@@ -233,8 +283,8 @@ router.get('/verify',
           email: user.email,
           created_at: new Date(user.created_at),
           total_rewards_earned: user.total_rewards_earned,
-        last_claim_timestamp: new Date(user.last_claim_timestamp),
-        updated_at: new Date(user.updated_at),
+          last_claim_timestamp: new Date(user.last_claim_timestamp),
+          updated_at: new Date(user.updated_at),
         },
       },
       success: true,
@@ -242,17 +292,26 @@ router.get('/verify',
   })
 );
 
-router.get('/nonce',
+router.get(
+  '/nonce',
   authRateLimit,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { wallet_address } = req.query;
 
     if (!wallet_address || typeof wallet_address !== 'string') {
-      throw createError('Wallet address is required', 400, 'MISSING_WALLET_ADDRESS');
+      throw createError(
+        'Wallet address is required',
+        400,
+        'MISSING_WALLET_ADDRESS'
+      );
     }
 
     if (!isValidSolanaAddress(wallet_address)) {
-      throw createError('Invalid Solana wallet address', 400, 'INVALID_WALLET_ADDRESS');
+      throw createError(
+        'Invalid Solana wallet address',
+        400,
+        'INVALID_WALLET_ADDRESS'
+      );
     }
 
     const nonce = generateNonce();
