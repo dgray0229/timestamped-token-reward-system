@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20.19.4-alpine AS builder
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ RUN npm run build --workspace=packages/shared
 RUN npm run build --workspace=apps/api
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20.19.4-alpine AS production
 
 WORKDIR /app
 
@@ -41,7 +41,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
