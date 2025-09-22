@@ -1,67 +1,84 @@
-# Railway CORS Configuration Fix
+# Railway CORS Fix Deployment
 
-## Issue
+## Current Status
 
-The frontend at `https://tokenrewards.devingray.io` is being blocked by CORS policy when trying to access the API at `https://charismatic-rejoicing-production.up.railway.app`.
+- ✅ CORS configuration updated in `apps/api/src/config/index.ts`
+- ✅ Environment variable `CORS_ORIGIN` properly configured
+- ✅ Frontend wallet connection fixes applied
+- ✅ Local builds successful for both API and Web app
+- 🚀 **Ready for Railway deployment**
 
-## Root Cause
+## Deployment Steps Required
 
-The Railway deployment doesn't have the `CORS_ORIGIN` environment variable configured to allow the production frontend domain.
+### 1. Railway Environment Variables
 
-## Solution
-
-### 1. Set Environment Variable on Railway
-
-In your Railway dashboard:
-
-1. Go to your API service project
-2. Navigate to the **Variables** tab
-3. Add a new environment variable:
-   - **Key**: `CORS_ORIGIN`
-   - **Value**: `https://tokenrewards.devingray.io`
-
-### 2. For Multiple Domains (Optional)
-
-If you need to allow multiple origins (e.g., both development and production):
-
-- **Key**: `CORS_ORIGIN`
-- **Value**: `http://localhost:5173,https://tokenrewards.devingray.io`
-
-### 3. Redeploy
-
-After setting the environment variable, Railway should automatically redeploy your service. If not, trigger a manual redeploy.
-
-## Verification
-
-Once deployed, you can verify the CORS configuration by:
-
-1. Opening browser developer tools
-2. Visiting `https://tokenrewards.devingray.io`
-3. Attempting to connect a wallet
-4. Checking that there are no CORS errors in the console
-
-## Backup Configuration
-
-The API code has been updated to automatically use `https://tokenrewards.devingray.io` as the default CORS origin when `NODE_ENV=production`, so even if the environment variable isn't set, it should work for your production domain.
-
-## Commands to Run After Deployment
-
-```bash
-# Test the API health endpoint
-curl https://charismatic-rejoicing-production.up.railway.app/health
-
-# Test CORS preflight request
-curl -H "Origin: https://tokenrewards.devingray.io" \
-     -H "Access-Control-Request-Method: POST" \
-     -H "Access-Control-Request-Headers: Content-Type" \
-     -X OPTIONS \
-     https://charismatic-rejoicing-production.up.railway.app/api/v1/auth/wallet/connect
-```
-
-The OPTIONS request should return CORS headers including:
+Set these in your Railway API service settings:
 
 ```
-Access-Control-Allow-Origin: https://tokenrewards.devingray.io
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-ID
+CORS_ORIGIN=${{web.url}}
 ```
+
+This will automatically set the CORS origin to the Railway-generated web service URL.
+
+### 2. Verify Other Environment Variables
+
+Ensure these are also set in Railway:
+
+**API Service:**
+
+```
+NODE_ENV=production
+PORT=$PORT
+JWT_SECRET=your-secure-jwt-secret
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_ANON_KEY=your-anon-key
+SOLANA_NETWORK=devnet
+SOLANA_RPC_URL=https://api.devnet.solana.com
+```
+
+**Web Service:**
+
+```
+VITE_API_URL=${{api.url}}/api/v1
+VITE_SOLANA_NETWORK=devnet
+VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
+```
+
+## What Was Fixed
+
+### CORS Issues
+
+- Updated `getCorsOrigins()` function to properly read `CORS_ORIGIN` environment variable
+- Added support for comma-separated multiple origins
+- Fallback to production domain if no CORS_ORIGIN is set
+
+### Wallet Connection Issues
+
+- Fixed Buffer usage by replacing with browser-native `btoa()` function
+- Removed redundant Phantom wallet adapter registration
+- Synchronized message format between frontend and backend for Solana authentication
+- Enhanced error handling and filtering for browser extension noise
+
+### Production Configuration
+
+- Proper Railway service URL references using `${{service.url}}` syntax
+- Environment-specific CORS handling
+- Comprehensive error handling and logging
+
+## Testing After Deployment
+
+1. Check API health endpoint: `{api-url}/health`
+2. Test wallet connection from frontend
+3. Verify CORS headers in browser network tab
+4. Test Solana wallet authentication flow
+
+## Build Information
+
+- API build: ✅ Successful
+- Web build: ✅ Successful
+- Deployment timestamp: $(date)
+
+---
+
+**Next Step:** Set the `CORS_ORIGIN=${{web.url}}` environment variable in Railway dashboard and trigger redeploy.
