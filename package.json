@@ -38,8 +38,11 @@
     "docker:clean": "docker-compose down -v && docker system prune -f",
     "railway:setup": "railway run --service api 'psql $DATABASE_URL -f scripts/railway-setup.sql'",
     "railway:deploy": "railway up",
+    "railway:deploy:api": "railway up --service api",
+    "railway:deploy:web": "railway up --service web",
     "railway:logs:api": "railway logs --service api",
-    "railway:logs:web": "railway logs --service web"
+    "railway:logs:web": "railway logs --service web",
+    "start": "npm run start --workspace=apps/api"
   },
   "devDependencies": {
     "prettier": "^3.0.0",

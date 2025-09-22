@@ -1,10 +1,11 @@
+# Railway Root Dockerfile - defaults to API service
+# This allows Railway to deploy the API from the root directory
+# For web service, use apps/web/Dockerfile specifically
+
 # Build stage
-FROM node:20.19.4-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
-
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++ gcc libc-dev pkgconfig libusb-dev eudev-dev linux-headers
 
 # Copy package files
 COPY package.json package-lock.json ./
@@ -28,12 +29,9 @@ RUN npm run build --workspace=packages/shared
 RUN npm run build --workspace=apps/api
 
 # Production stage
-FROM node:20.19.4-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
-
-# Install curl for health checks
-RUN apk add --no-cache curl
 
 # Install production dependencies only
 COPY package.json package-lock.json ./
@@ -41,7 +39,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
@@ -58,9 +56,10 @@ RUN mkdir -p /app/logs && chown -R nextjs:nodejs /app/logs
 
 USER nextjs
 
+# Railway will inject the PORT variable
 EXPOSE 3001
 
-# Health check - Railway will map to the correct port
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
