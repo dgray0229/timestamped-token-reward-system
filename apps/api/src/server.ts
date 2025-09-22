@@ -91,6 +91,14 @@ async function createApp(): Promise<express.Application> {
     });
   });
 
+  // Simple health check endpoint for deployment platforms
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // Error handling middleware (must be last)
   app.use(notFoundHandler);
   app.use(errorHandler);

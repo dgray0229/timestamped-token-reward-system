@@ -1,8 +1,26 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load .env from project root (two levels up from this file)
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+// ES modules equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root - try multiple paths for different environments
+const envPaths = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), '../../.env'),
+  path.resolve(__dirname, '../../../.env'),
+];
+
+for (const envPath of envPaths) {
+  try {
+    dotenv.config({ path: envPath });
+    break;
+  } catch (error) {
+    // Continue to next path
+  }
+}
 
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
@@ -60,12 +78,18 @@ export function validateConfig(): void {
     'SUPABASE_SERVICE_ROLE_KEY',
     'JWT_SECRET',
   ];
-  
+
   const missing = required.filter(key => !process.env[key]);
-  
+
   if (missing.length > 0) {
+    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    console.error('Please set these environment variables in your Railway service settings.');
+    console.error('Required environment variables:');
+    console.error('- SUPABASE_URL: Your Supabase project URL');
+    console.error('- SUPABASE_SERVICE_ROLE_KEY: Your Supabase service role key');
+    console.error('- JWT_SECRET: A secure random string for JWT signing');
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
-  
+
   console.log('✅ Configuration validated successfully');
 }
