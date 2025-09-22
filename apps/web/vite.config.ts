@@ -21,12 +21,7 @@ export default defineConfig({
         __dirname,
         '../../packages/shared/dist'
       ),
-      // Buffer polyfill for Node.js compatibility
-      buffer: 'buffer',
     },
-  },
-  define: {
-    global: 'globalThis',
   },
   server: {
     port: 5173,

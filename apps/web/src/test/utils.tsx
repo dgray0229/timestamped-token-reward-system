@@ -95,7 +95,7 @@ export function renderWithProviders(
       preloadedState,
     }),
     ...renderOptions
-  }: ExtendedRenderOptions = {},
+  }: ExtendedRenderOptions = {}
 ): ReturnType<typeof render> & { store: any } {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
@@ -181,7 +181,7 @@ export const customMatchers = {
   toHaveNotification: (received: any, type: string, message?: string) => {
     const notifications = received.getState().ui.notifications;
     const hasNotification = notifications.some(
-      (n: any) => n.type === type && (!message || n.message.includes(message)),
+      (n: any) => n.type === type && (!message || n.message.includes(message))
     );
 
     return {
@@ -205,7 +205,7 @@ export const mockWalletFunctions = {
 export const mockPublicKey = {
   toString: () => '1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T',
   toBase58: () => '1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T',
-  toBuffer: () => Buffer.from('test'),
+  toBuffer: () => new Uint8Array([116, 101, 115, 116]),
 };
 
 // Test IDs for easier element selection
