@@ -58,7 +58,7 @@ export function generateWalletMessage(walletAddress: string): {
 } {
   const nonce = generateNonce();
   const timestamp = Date.now();
-  const message = generateSignatureMessage(walletAddress, nonce, timestamp);
+  const message = generateSignatureMessage(walletAddress, nonce);
 
   return { message, nonce, timestamp };
 }
