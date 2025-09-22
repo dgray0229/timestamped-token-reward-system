@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { 
-  fetchAvailableRewards,
   claimRewards,
+  fetchAvailableRewards,
   selectRewards,
 } from '../store/slices/rewardsSlice';
 import { 
@@ -12,7 +12,7 @@ import {
 } from '../store/slices/transactionsSlice';
 import { selectWallet } from '../store/slices/walletSlice';
 import { addNotification } from '../store/slices/uiSlice';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from './ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Alert, AlertDescription } from './ui/Alert';
@@ -28,11 +28,11 @@ export function RewardsDashboard() {
     availableRewards,
     isLoadingRewards,
     isClaiming,
-    rewardsError
+    rewardsError,
   } = useAppSelector(selectRewards);
   const { 
     transactions, 
-    isLoading: transactionsLoading 
+    isLoading: transactionsLoading, 
   } = useAppSelector(selectTransactions);
 
   // Fetch data when authenticated
@@ -167,7 +167,7 @@ export function RewardsDashboard() {
     );
   }
 
-  if (rewardsLoading) {
+  if (isLoadingRewards) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
@@ -236,7 +236,7 @@ export function RewardsDashboard() {
                     <div
                       className="bg-gradient-to-r from-primary to-green-500 h-2 rounded-full transition-all duration-500"
                       style={{
-                        width: `${Math.min((availableRewards.hours_since_last_claim / 24) * 100, 100)}%`
+                        width: `${Math.min((availableRewards.hours_since_last_claim / 24) * 100, 100)}%`,
                       }}
                     ></div>
                   </div>
@@ -382,7 +382,7 @@ export function RewardsDashboard() {
                             {transaction.transaction_signature ? truncateAddress(transaction.transaction_signature, 6, 6) : 'Pending'}
                           </span>
                           <button
-                            onClick={() => navigator.clipboard.writeText(transaction.transaction_signature)}
+                            onClick={() => transaction.transaction_signature && navigator.clipboard.writeText(transaction.transaction_signature)}
                             className="text-xs text-muted-foreground hover:text-primary transition-colors p-1"
                             title="Copy transaction signature"
                           >

@@ -10,7 +10,7 @@
  * - Navigation and layout preferences
  */
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 // Types for UI state
 type Theme = 'light' | 'dark' | 'system';

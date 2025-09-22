@@ -10,8 +10,8 @@
 
 import { api } from './api';
 import type {
-  RewardTransaction,
   PaginatedTransactions,
+  RewardTransaction,
   TransactionHistoryParams,
   TransactionStatus,
 } from '@reward-system/shared';
@@ -21,7 +21,7 @@ import { TRANSACTION_ENDPOINTS } from '@reward-system/shared';
  * Get paginated transaction history
  */
 export async function getTransactionHistory(
-  params: TransactionHistoryParams = {}
+  params: TransactionHistoryParams = {},
 ): Promise<PaginatedTransactions> {
   const queryParams = new URLSearchParams();
   
@@ -36,7 +36,7 @@ export async function getTransactionHistory(
   response.transactions = response.transactions.map(tx => ({
     ...tx,
     timestamp_earned: new Date(tx.timestamp_earned),
-    timestamp_claimed: tx.timestamp_claimed ? new Date(tx.timestamp_claimed) : undefined,
+    ...(tx.timestamp_claimed && { timestamp_claimed: new Date(tx.timestamp_claimed) }),
   }));
   
   return response;
@@ -46,7 +46,7 @@ export async function getTransactionHistory(
  * Get details for a specific transaction
  */
 export async function getTransactionDetails(
-  transactionId: string
+  transactionId: string,
 ): Promise<RewardTransaction> {
   const url = TRANSACTION_ENDPOINTS.DETAILS.replace(':id', transactionId);
   const response = await api.get<RewardTransaction>(url);
@@ -55,7 +55,7 @@ export async function getTransactionDetails(
   return {
     ...response,
     timestamp_earned: new Date(response.timestamp_earned),
-    timestamp_claimed: response.timestamp_claimed ? new Date(response.timestamp_claimed) : undefined,
+    ...(response.timestamp_claimed && { timestamp_claimed: new Date(response.timestamp_claimed) }),
   };
 }
 
@@ -63,7 +63,7 @@ export async function getTransactionDetails(
  * Check the status of a specific transaction
  */
 export async function checkTransactionStatus(
-  transactionId: string
+  transactionId: string,
 ): Promise<{
   transactionId: string;
   status: TransactionStatus;
@@ -85,7 +85,7 @@ export async function checkTransactionStatus(
  */
 export async function exportTransactions(
   format: 'csv' | 'json',
-  filters?: TransactionHistoryParams
+  filters?: TransactionHistoryParams,
 ): Promise<Blob> {
   const queryParams = new URLSearchParams();
   queryParams.append('format', format);
@@ -204,7 +204,7 @@ export async function subscribeToTransactionUpdates(
     status: TransactionStatus;
     blockNumber?: string;
     timestamp: Date;
-  }) => void
+  }) => void,
 ): Promise<() => void> {
   // This would typically use WebSocket or Server-Sent Events
   // For now, we'll implement polling for the specified transactions
@@ -218,7 +218,7 @@ export async function subscribeToTransactionUpdates(
     try {
       // Check status for each transaction
       const statusChecks = await Promise.allSettled(
-        transactionIds.map(id => checkTransactionStatus(id))
+        transactionIds.map(id => checkTransactionStatus(id)),
       );
       
       statusChecks.forEach((result, index) => {
@@ -226,7 +226,7 @@ export async function subscribeToTransactionUpdates(
           callback({
             transactionId: result.value.transactionId,
             status: result.value.status,
-            blockNumber: result.value.blockNumber || undefined,
+            ...(result.value.blockNumber && { blockNumber: result.value.blockNumber }),
             timestamp: result.value.lastChecked,
           });
         }
@@ -289,7 +289,7 @@ export async function getTransactionReceipt(signature: string): Promise<{
  * Verify transaction on blockchain
  */
 export async function verifyTransactionOnChain(
-  signature: string
+  signature: string,
 ): Promise<{
   verified: boolean;
   onChainStatus: 'confirmed' | 'finalized' | 'not_found';
@@ -314,7 +314,7 @@ export async function reportTransactionIssue(
     type: 'stuck' | 'failed' | 'incorrect_amount' | 'missing' | 'other';
     description: string;
     expectedOutcome?: string;
-  }
+  },
 ): Promise<{
   ticketId: string;
   message: string;

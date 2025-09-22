@@ -39,7 +39,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
       new SolflareWalletAdapter({ network }),
       new TorusWalletAdapter(),
     ],
-    [network]
+    [network],
   );
 
   return (

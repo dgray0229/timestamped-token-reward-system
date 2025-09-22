@@ -114,7 +114,7 @@ function logErrorToService(type: string, errorData: GlobalErrorData) {
 export function reportManualError(error: Error, context?: string) {
   const errorData: GlobalErrorData = {
     message: error.message,
-    stack: error.stack || undefined,
+    ...(error.stack && { stack: error.stack }),
     timestamp: new Date().toISOString(),
     userAgent: navigator.userAgent,
     url: window.location.href,

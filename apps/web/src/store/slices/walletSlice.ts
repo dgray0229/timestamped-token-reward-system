@@ -9,7 +9,7 @@
  * - Connection errors and loading states
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { User, WalletConnectResponse } from '@reward-system/shared';
 import * as walletService from '../../services/wallet';
 
@@ -59,15 +59,15 @@ export const authenticateWallet = createAsyncThunk(
       const response = await walletService.authenticateWallet(
         params.walletAddress,
         params.signature,
-        params.message
+        params.message,
       );
       return response;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Authentication failed'
+        error instanceof Error ? error.message : 'Authentication failed',
       );
     }
-  }
+  },
 );
 
 export const disconnectWallet = createAsyncThunk(
@@ -78,10 +78,10 @@ export const disconnectWallet = createAsyncThunk(
       return;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Disconnect failed'
+        error instanceof Error ? error.message : 'Disconnect failed',
       );
     }
-  }
+  },
 );
 
 export const refreshSession = createAsyncThunk(
@@ -92,10 +92,10 @@ export const refreshSession = createAsyncThunk(
       return response;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Session refresh failed'
+        error instanceof Error ? error.message : 'Session refresh failed',
       );
     }
-  }
+  },
 );
 
 // Wallet slice definition

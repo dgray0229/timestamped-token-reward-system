@@ -10,8 +10,8 @@ import './styles/globals.css';
 // Initialize global error handling
 import { 
   setupGlobalErrorHandler, 
+  setupNetworkMonitoring, 
   setupPerformanceMonitoring, 
-  setupNetworkMonitoring 
 } from './utils/globalErrorHandler';
 
 setupGlobalErrorHandler();
@@ -42,7 +42,7 @@ const wallets = [
 ];
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById('root') as HTMLElement,
 );
 
 root.render(
@@ -63,5 +63,5 @@ root.render(
         </ConnectionProvider>
       </Provider>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

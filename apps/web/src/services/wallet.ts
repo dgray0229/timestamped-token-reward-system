@@ -10,14 +10,14 @@
 
 import { api, setAuthToken } from './api';
 import type { 
+  User, 
   WalletConnectRequest, 
   WalletConnectResponse, 
-  User 
 } from '@reward-system/shared';
 import { 
-  generateNonce, 
-  generateSignatureMessage,
-  AUTH_ENDPOINTS 
+  AUTH_ENDPOINTS, 
+  generateNonce,
+  generateSignatureMessage, 
 } from '@reward-system/shared';
 
 /**
@@ -26,7 +26,7 @@ import {
 export async function authenticateWallet(
   walletAddress: string,
   signature: string,
-  message: string
+  message: string,
 ): Promise<WalletConnectResponse> {
   const request: WalletConnectRequest = {
     wallet_address: walletAddress,
@@ -36,7 +36,7 @@ export async function authenticateWallet(
 
   const response = await api.post<WalletConnectResponse>(
     AUTH_ENDPOINTS.WALLET_CONNECT,
-    request
+    request,
   );
 
   // Store authentication data
@@ -85,7 +85,7 @@ export async function disconnectWallet(): Promise<void> {
  */
 export async function refreshSession(): Promise<WalletConnectResponse> {
   const response = await api.post<WalletConnectResponse>(
-    AUTH_ENDPOINTS.REFRESH_TOKEN
+    AUTH_ENDPOINTS.REFRESH_TOKEN,
   );
 
   // Update stored authentication data

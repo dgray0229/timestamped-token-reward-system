@@ -17,7 +17,7 @@ export default defineConfig({
       transformIndexHtml(html) {
         return html.replace(
           '<head>',
-          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>'
+          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>',
         );
       },
     },
@@ -52,6 +52,11 @@ export default defineConfig({
   build: {
     target: 'es2020',
     rollupOptions: {
+      external: [
+        '@trezor/connect-common',
+        '@trezor/connect-web',
+        '@trezor/env-utils',
+      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],

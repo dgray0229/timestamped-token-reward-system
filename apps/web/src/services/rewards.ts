@@ -12,9 +12,9 @@ import { api } from './api';
 import type {
   AvailableRewards,
   ClaimRewardResponse,
-  RewardTransaction,
-  CreateTransactionRequest,
   ConfirmTransactionRequest,
+  CreateTransactionRequest,
+  RewardTransaction,
 } from '@reward-system/shared';
 import { REWARD_ENDPOINTS } from '@reward-system/shared';
 
@@ -36,7 +36,7 @@ export async function claimRewards(expectedAmount: string): Promise<ClaimRewardR
 
   const response = await api.post<ClaimRewardResponse>(
     REWARD_ENDPOINTS.CLAIM,
-    request
+    request,
   );
 
   return response;
@@ -47,7 +47,7 @@ export async function claimRewards(expectedAmount: string): Promise<ClaimRewardR
  */
 export async function confirmRewardClaim(
   transactionId: string,
-  signature: string
+  signature: string,
 ): Promise<RewardTransaction> {
   const request: ConfirmTransactionRequest = {
     transaction_id: transactionId,
@@ -56,7 +56,7 @@ export async function confirmRewardClaim(
 
   const response = await api.post<RewardTransaction>(
     REWARD_ENDPOINTS.CONFIRM,
-    request
+    request,
   );
 
   return response;
@@ -237,7 +237,7 @@ export async function subscribeToRewardUpdates(
   callback: (update: {
     type: 'new_reward' | 'claim_processed' | 'claim_failed';
     data: any;
-  }) => void
+  }) => void,
 ): Promise<() => void> {
   // This would typically use WebSocket or Server-Sent Events
   // For now, we'll implement polling as a fallback

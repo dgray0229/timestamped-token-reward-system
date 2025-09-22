@@ -1,12 +1,12 @@
 import React, { PropsWithChildren } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
-import { configureStore, PreloadedState } from '@reduxjs/toolkit';
+import { RenderOptions, render } from '@testing-library/react';
+import { PreloadedState, configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
 // Import your store and reducers
-import { RootState, AppStore } from '../store';
+import { AppStore, RootState } from '../store';
 import walletSlice from '../store/slices/walletSlice';
 import rewardsSlice from '../store/slices/rewardsSlice';
 import transactionsSlice from '../store/slices/transactionsSlice';
@@ -18,7 +18,7 @@ interface ExtendedRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   store?: AppStore;
 }
 
-const defaultPreloadedState: Partial<RootState> = {
+const defaultPreloadedState: RootState = {
   wallet: {
     isConnected: false,
     isConnecting: false,
@@ -52,11 +52,15 @@ const defaultPreloadedState: Partial<RootState> = {
     totalPages: 1,
     isLoading: false,
     error: null,
+    statusFilter: '',
+    searchQuery: '',
     selectedTransaction: null,
-    exportStatus: 'idle',
-    exportError: null,
+    isLoadingDetails: false,
+    detailsError: null,
     isExporting: false,
-    filters: {},
+    exportError: null,
+    pendingTransactions: [],
+    lastUpdateTime: null,
   },
   ui: {
     theme: 'system',
@@ -66,6 +70,13 @@ const defaultPreloadedState: Partial<RootState> = {
     loadingStates: {},
     activeTab: 'overview',
     breadcrumbs: [],
+    compactMode: false,
+    animationsEnabled: true,
+    connectionStatus: {
+      api: 'connected',
+      solana: 'connected',
+      wallet: 'connected',
+    },
   },
 };
 
@@ -84,7 +95,7 @@ export function renderWithProviders(
       preloadedState,
     }),
     ...renderOptions
-  }: ExtendedRenderOptions = {}
+  }: ExtendedRenderOptions = {},
 ) {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
@@ -168,7 +179,7 @@ export const customMatchers = {
   toHaveNotification: (received: any, type: string, message?: string) => {
     const notifications = received.getState().ui.notifications;
     const hasNotification = notifications.some((n: any) => 
-      n.type === type && (!message || n.message.includes(message))
+      n.type === type && (!message || n.message.includes(message)),
     );
     
     return {

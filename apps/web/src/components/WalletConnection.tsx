@@ -4,9 +4,9 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   authenticateWallet,
+  clearErrors,
   disconnectWallet,
   selectWallet,
-  clearErrors
 } from '../store/slices/walletSlice';
 import { Button } from './ui/Button';
 import { truncateAddress } from '../lib/utils';
@@ -21,7 +21,7 @@ export function WalletConnection() {
     user,
     isConnecting,
     connectionError,
-    authError
+    authError,
   } = useAppSelector(selectWallet);
   
   const { 
@@ -29,7 +29,7 @@ export function WalletConnection() {
     publicKey, 
     connected, 
     disconnect,
-    signMessage 
+    signMessage, 
   } = useWallet();
 
   const { handleWalletError, handleSuccess, handleInfo } = useErrorHandling();

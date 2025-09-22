@@ -9,12 +9,12 @@
  * - Export functionality
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { 
-  RewardTransaction, 
   PaginatedTransactions, 
-  TransactionStatus,
-  TransactionHistoryParams 
+  RewardTransaction, 
+  TransactionHistoryParams,
+  TransactionStatus, 
 } from '@reward-system/shared';
 import * as transactionsService from '../../services/transactions';
 
@@ -73,10 +73,10 @@ export const fetchTransactions = createAsyncThunk(
       return { ...response, params };
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch transactions'
+        error instanceof Error ? error.message : 'Failed to fetch transactions',
       );
     }
-  }
+  },
 );
 
 export const fetchTransactionDetails = createAsyncThunk(
@@ -87,24 +87,24 @@ export const fetchTransactionDetails = createAsyncThunk(
       return transaction;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch transaction details'
+        error instanceof Error ? error.message : 'Failed to fetch transaction details',
       );
     }
-  }
+  },
 );
 
 export const checkTransactionStatus = createAsyncThunk(
   'transactions/checkStatus',
   async (transactionId: string, { rejectWithValue }) => {
     try {
-      const status = await transactionsService.checkTransactionStatus(transactionId);
-      return { transactionId, status };
+      const result = await transactionsService.checkTransactionStatus(transactionId);
+      return result;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to check transaction status'
+        error instanceof Error ? error.message : 'Failed to check transaction status',
       );
     }
-  }
+  },
 );
 
 export const exportTransactions = createAsyncThunk(
@@ -115,10 +115,10 @@ export const exportTransactions = createAsyncThunk(
       return { blob, format: params.format };
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to export transactions'
+        error instanceof Error ? error.message : 'Failed to export transactions',
       );
     }
-  }
+  },
 );
 
 // Transactions slice definition
@@ -257,7 +257,7 @@ const transactionsSlice = createSlice({
       })
       .addCase(checkTransactionStatus.fulfilled, (state, action) => {
         const { transactionId, status } = action.payload;
-        
+
         // Update transaction status using the updateTransactionStatus reducer logic
         transactionsSlice.caseReducers.updateTransactionStatus(state, {
           type: 'transactions/updateTransactionStatus',

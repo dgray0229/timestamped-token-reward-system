@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from './Card';
+import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { Button } from './Button';
 import { Alert, AlertDescription } from './Alert';
 

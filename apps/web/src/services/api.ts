@@ -9,8 +9,8 @@
  * - Comprehensive error transformation and user feedback
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import type { ApiResponse, ApiError } from '@reward-system/shared';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { ApiError, ApiResponse } from '@reward-system/shared';
 
 // API configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
@@ -53,7 +53,7 @@ const createApiClient = (): AxiosInstance => {
     (error) => {
       console.error('Request interceptor error:', error);
       return Promise.reject(error);
-    }
+    },
   );
 
   // Response interceptor for error handling and logging
@@ -90,7 +90,7 @@ const createApiClient = (): AxiosInstance => {
       // Transform and enhance error information
       const apiError: ApiError = transformError(error);
       return Promise.reject(apiError);
-    }
+    },
   );
 
   return client;
@@ -111,7 +111,7 @@ function generateRequestId(): string {
  */
 export async function apiRequest<T = any>(
   config: AxiosRequestConfig,
-  retries: number = 2
+  retries: number = 2,
 ): Promise<T> {
   try {
     const response = await apiClient.request<ApiResponse<T>>(config);

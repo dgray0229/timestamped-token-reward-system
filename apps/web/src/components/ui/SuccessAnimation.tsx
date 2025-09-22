@@ -26,8 +26,8 @@ export function SuccessAnimation({ isVisible, onComplete, amount }: SuccessAnima
 
   return (
     <div className={cn(
-      "fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm",
-      isVisible ? "animate-fade-in" : "animate-fade-out"
+      'fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm',
+      isVisible ? 'animate-fade-in' : 'animate-fade-out',
     )}>
       <div className="bg-card rounded-2xl p-8 shadow-2xl border max-w-sm mx-4 text-center">
         {/* Success Icon with Animation */}
@@ -42,12 +42,12 @@ export function SuccessAnimation({ isVisible, onComplete, amount }: SuccessAnima
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className={`absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping`}
+              className={'absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping'}
               style={{
                 top: '50%',
                 left: '50%',
                 animationDelay: `${i * 0.2}s`,
-                transform: `translate(-50%, -50%) rotate(${i * 60}deg) translateY(-40px)`
+                transform: `translate(-50%, -50%) rotate(${i * 60}deg) translateY(-40px)`,
               }}
             />
           ))}

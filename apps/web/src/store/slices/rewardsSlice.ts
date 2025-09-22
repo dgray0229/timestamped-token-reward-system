@@ -9,7 +9,7 @@
  * - Claiming history and status
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { AvailableRewards, ClaimRewardResponse } from '@reward-system/shared';
 import * as rewardsService from '../../services/rewards';
 
@@ -60,10 +60,10 @@ export const fetchAvailableRewards = createAsyncThunk(
       return rewards;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch rewards'
+        error instanceof Error ? error.message : 'Failed to fetch rewards',
       );
     }
-  }
+  },
 );
 
 export const claimRewards = createAsyncThunk(
@@ -74,10 +74,10 @@ export const claimRewards = createAsyncThunk(
       return response;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to claim rewards'
+        error instanceof Error ? error.message : 'Failed to claim rewards',
       );
     }
-  }
+  },
 );
 
 export const confirmRewardClaim = createAsyncThunk(
@@ -89,15 +89,15 @@ export const confirmRewardClaim = createAsyncThunk(
     try {
       const response = await rewardsService.confirmRewardClaim(
         params.transactionId,
-        params.signature
+        params.signature,
       );
       return response;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to confirm claim'
+        error instanceof Error ? error.message : 'Failed to confirm claim',
       );
     }
-  }
+  },
 );
 
 export const fetchUserStats = createAsyncThunk(
@@ -108,10 +108,10 @@ export const fetchUserStats = createAsyncThunk(
       return stats;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch user stats'
+        error instanceof Error ? error.message : 'Failed to fetch user stats',
       );
     }
-  }
+  },
 );
 
 // Rewards slice definition
