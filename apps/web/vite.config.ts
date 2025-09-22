@@ -31,13 +31,14 @@ export default defineConfig({
     }
   </script>
   <script type="module">
-    try {
-      const { Buffer } = await import("buffer");
-      globalThis.Buffer = Buffer;
-    } catch (e) {
-      console.warn("Failed to load Buffer polyfill:", e);
-    }
-  </script>`,
+    // Load Buffer polyfill
+    import('buffer').then(module => {
+      globalThis.Buffer = module.Buffer;
+    }).catch(() => {
+      // Fallback if buffer module fails to load
+      console.warn('Buffer polyfill not available');
+    });
+  </script>`
         );
       },
     },
@@ -56,7 +57,7 @@ export default defineConfig({
       // Explicit alias for shared package
       '@reward-system/shared': path.resolve(
         __dirname,
-        '../../packages/shared/dist',
+        '../../packages/shared/dist'
       ),
       // Node.js polyfills for browser
       buffer: 'buffer',
@@ -69,6 +70,7 @@ export default defineConfig({
   define: {
     // Fix process.env for browser
     'process.env': {},
+    global: 'globalThis',
   },
   server: {
     port: 5173,
