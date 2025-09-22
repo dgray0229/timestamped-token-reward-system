@@ -8,7 +8,10 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import {
+  SolflareWalletAdapter,
+  PhantomWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl, Connection } from '@solana/web3.js';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -29,9 +32,12 @@ export default function SolanaProviderWrapper({ children }: Props) {
   // Initialize wallet adapters with error handling
   const [wallets, setWallets] = useState(() => {
     try {
-      return [new SolflareWalletAdapter({ network })];
+      return [
+        new PhantomWalletAdapter(),
+        new SolflareWalletAdapter({ network }),
+      ];
     } catch (error) {
-      console.warn('Failed to initialize Solflare wallet adapter:', error);
+      console.warn('Failed to initialize wallet adapters:', error);
       return [];
     }
   });
