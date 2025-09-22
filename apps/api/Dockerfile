@@ -7,13 +7,13 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ gcc libc-dev pkgconfig libusb-dev eudev-dev linux-headers
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -22,10 +22,10 @@ COPY apps/api ./apps/api
 COPY tsconfig.json ./
 
 # Build shared package
-RUN npm run build --workspace=packages/shared
+RUN yarn workspace packages/shared build
 
 # Build API
-RUN npm run build --workspace=apps/api
+RUN yarn workspace apps/api build
 
 # Production stage
 FROM node:20.19.4-alpine AS production
@@ -36,12 +36,12 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 # Install production dependencies only
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-RUN npm ci --omit=dev && npm cache clean --force
+RUN yarn install --frozen-lockfile --production && yarn cache clean
 
 # Copy built application
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist

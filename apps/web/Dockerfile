@@ -7,13 +7,13 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ gcc libc-dev pkgconfig libusb-dev eudev-dev linux-headers
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config/package.json ./packages/config/
 COPY apps/web/package.json ./apps/web/
 
 # Install dependencies
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -22,7 +22,7 @@ COPY apps/web ./apps/web
 COPY tsconfig.json ./
 
 # Build shared package
-RUN npm run build --workspace=packages/shared
+RUN yarn workspace packages/shared build
 
 # Build arguments for environment variables
 ARG VITE_API_URL
@@ -35,7 +35,7 @@ ENV VITE_SOLANA_NETWORK=${VITE_SOLANA_NETWORK}
 ENV VITE_SOLANA_RPC_URL=${VITE_SOLANA_RPC_URL}
 
 # Build web application
-RUN npm run build --workspace=apps/web
+RUN yarn workspace apps/web build
 
 # Production stage
 FROM nginx:alpine AS production
