@@ -3,16 +3,20 @@ import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
+// Buffer polyfill for browser environment
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
+
 import App from './App';
 import { store } from './store';
 import ErrorBoundary from './components/ErrorBoundary';
 import './styles/globals.css';
 
 // Initialize global error handling
-import { 
-  setupGlobalErrorHandler, 
-  setupNetworkMonitoring, 
-  setupPerformanceMonitoring, 
+import {
+  setupGlobalErrorHandler,
+  setupNetworkMonitoring,
+  setupPerformanceMonitoring,
 } from './utils/globalErrorHandler';
 
 setupGlobalErrorHandler();
@@ -26,7 +30,7 @@ import SolanaProviderWrapper from './components/SolanaProviderWrapper';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement,
+  document.getElementById('root') as HTMLElement
 );
 
 root.render(
@@ -39,7 +43,13 @@ root.render(
         }}
       >
         <Provider store={store}>
-          <ErrorBoundary fallback={<div className="text-center p-4">Redux store error - please reload</div>}>
+          <ErrorBoundary
+            fallback={
+              <div className='text-center p-4'>
+                Redux store error - please reload
+              </div>
+            }
+          >
             <SolanaProviderWrapper>
               <App />
             </SolanaProviderWrapper>
@@ -47,5 +57,5 @@ root.render(
         </Provider>
       </BrowserRouter>
     </ErrorBoundary>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
