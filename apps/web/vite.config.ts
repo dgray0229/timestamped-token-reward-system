@@ -17,7 +17,7 @@ export default defineConfig({
       transformIndexHtml(html) {
         return html.replace(
           '<head>',
-          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>',
+          '<head>\n  <script>if (typeof global === "undefined") { var global = globalThis; }</script>\n  <script>import { Buffer } from "buffer"; globalThis.Buffer = Buffer;</script>'
         );
       },
     },
@@ -33,6 +33,11 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/types': path.resolve(__dirname, './src/types'),
       '@/styles': path.resolve(__dirname, './src/styles'),
+      // Explicit alias for shared package
+      '@reward-system/shared': path.resolve(
+        __dirname,
+        '../../packages/shared/dist'
+      ),
       // Node.js polyfills for browser
       buffer: 'buffer',
       crypto: 'crypto-browserify',

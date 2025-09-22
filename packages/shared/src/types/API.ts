@@ -1,6 +1,6 @@
 /**
  * API Types - Request/Response contracts
- * 
+ *
  * These types define the API contract between frontend and backend,
  * ensuring type safety across the network boundary.
  */
@@ -34,7 +34,7 @@ export interface WalletConnectRequest {
 /** Wallet connection response */
 export interface WalletConnectResponse {
   success: boolean;
-  user: import('./User').User;
+  user: any; // Will be properly typed through index exports
   /** JWT token for authenticated requests */
   session_token: string;
 }

@@ -1,14 +1,20 @@
 {
-  "extends": "@reward-system/config/typescript/base.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "noEmit": false,
-    "lib": ["ES2022"],
-    "skipLibCheck": true
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
