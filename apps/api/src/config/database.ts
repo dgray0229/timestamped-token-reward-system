@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'development') {
   console.log('   To use real Supabase, update SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
 }
 
-export const supabase = createClient<Database>(
+export const supabase = createClient(
   supabaseUrl,
   supabaseServiceKey,
   {
@@ -23,7 +23,7 @@ export const supabase = createClient<Database>(
       persistSession: false,
     },
   }
-);
+) as any;
 
 export async function testDatabaseConnection(): Promise<boolean> {
   try {

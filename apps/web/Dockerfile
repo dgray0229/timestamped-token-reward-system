@@ -1,11 +1,15 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++ gcc libc-dev pkgconfig libusb-dev eudev-dev linux-headers
 
 # Copy package files
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/config/package.json ./packages/config/
 COPY apps/web/package.json ./apps/web/
 
 # Install dependencies
@@ -13,6 +17,7 @@ RUN npm ci
 
 # Copy source code
 COPY packages/shared ./packages/shared
+COPY packages/config ./packages/config
 COPY apps/web ./apps/web
 COPY tsconfig.json ./
 
@@ -34,6 +39,9 @@ RUN npm run build --workspace=apps/web
 
 # Production stage
 FROM nginx:alpine AS production
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy built application to nginx
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html

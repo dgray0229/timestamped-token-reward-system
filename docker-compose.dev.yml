@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: reward_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Backend API (Development)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: builder
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/reward_system
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SOLANA_NETWORK: ${SOLANA_NETWORK:-devnet}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/src:/app/apps/api/src:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - ./logs:/app/logs
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    command: ["npm", "run", "dev", "--workspace=apps/api"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Web App (Development)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: builder
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api/v1}
+        VITE_SOLANA_NETWORK: ${VITE_SOLANA_NETWORK:-devnet}
+        VITE_SOLANA_RPC_URL: ${VITE_SOLANA_RPC_URL:-https://api.devnet.solana.com}
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api/v1}
+      VITE_SOLANA_NETWORK: ${VITE_SOLANA_NETWORK:-devnet}
+      VITE_SOLANA_RPC_URL: ${VITE_SOLANA_RPC_URL:-https://api.devnet.solana.com}
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./apps/web/src:/app/apps/web/src:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    command: ["npm", "run", "dev", "--workspace=apps/web", "--", "--host", "0.0.0.0"]
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+
+networks:
+  default:
+    driver: bridge

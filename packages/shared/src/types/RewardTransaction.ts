@@ -15,17 +15,21 @@ export interface RewardTransaction {
   /** Foreign key to User */
   user_id: string;
   /** Solana transaction signature for blockchain verification */
-  transaction_signature: string;
+  transaction_signature?: string;
   /** Amount of tokens rewarded (bigint as string) */
   reward_amount: string;
   /** When the reward period started */
   timestamp_earned: Date;
   /** When user claimed the reward */
-  timestamp_claimed: Date;
+  timestamp_claimed?: Date;
   /** Blockchain transaction status */
   status: TransactionStatus;
   /** Solana slot number for finality confirmation */
-  block_number: string;
+  block_number?: string;
+  /** When the record was created */
+  created_at: Date;
+  /** When the record was last updated */
+  updated_at: Date;
 }
 
 /** Transaction creation request */
@@ -44,10 +48,16 @@ export interface ConfirmTransactionRequest {
 export interface AvailableRewards {
   /** Claimable reward amount */
   available_amount: string;
-  /** When next claim will be available */
-  next_claim_available_at: Date;
+  /** Hours until next claim is available */
+  next_claim_available_in: number;
   /** Hours elapsed since last claim */
   hours_since_last_claim: number;
+  /** Whether user can claim rewards now */
+  can_claim: boolean;
+  /** Current reward rate per hour */
+  reward_rate_per_hour: string;
+  /** Maximum daily reward limit */
+  max_daily_reward: string;
 }
 
 /** Transaction history pagination */

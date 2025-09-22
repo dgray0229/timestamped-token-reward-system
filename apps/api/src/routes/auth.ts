@@ -86,8 +86,9 @@ router.post('/wallet/connect',
         .from('users')
         .insert({
           wallet_address,
-          last_login: new Date().toISOString(),
-          is_active: true,
+          username: `user_${wallet_address.slice(0, 8)}`,
+          total_rewards_earned: '0',
+          last_claim_timestamp: new Date().toISOString(),
         })
         .select()
         .single();
@@ -100,23 +101,8 @@ router.post('/wallet/connect',
       user = newUser;
       logger.info('New user created', { userId: user.id, walletAddress: wallet_address });
     } else {
-      // Update existing user's last login
-      const { data: updatedUser, error: updateError } = await supabase
-        .from('users')
-        .update({
-          last_login: new Date().toISOString(),
-          is_active: true,
-        })
-        .eq('id', existingUser.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        logger.error('Failed to update user login', { error: updateError });
-        throw createError('Failed to update user', 500, 'USER_UPDATE_FAILED');
-      }
-
-      user = updatedUser;
+      // Use existing user
+      user = existingUser;
       logger.info('User logged in', { userId: user.id, walletAddress: wallet_address });
     }
 
@@ -128,11 +114,11 @@ router.post('/wallet/connect',
       .from('user_sessions')
       .insert({
         user_id: user.id,
+        wallet_address: user.wallet_address,
         session_token: sessionToken,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        ip_address: req.ip,
-        user_agent: req.get('User-Agent'),
         is_active: true,
+        last_activity: new Date().toISOString(),
       });
 
     if (sessionError) {
@@ -148,8 +134,10 @@ router.post('/wallet/connect',
         wallet_address: user.wallet_address,
         username: user.username,
         email: user.email,
-        created_at: user.created_at,
-        last_login: user.last_login,
+        created_at: new Date(user.created_at),
+        total_rewards_earned: user.total_rewards_earned,
+        last_claim_timestamp: new Date(user.last_claim_timestamp),
+        updated_at: new Date(user.updated_at),
       },
     };
 
@@ -199,7 +187,7 @@ router.post('/refresh',
       .update({
         session_token: sessionToken,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        last_accessed: new Date().toISOString(),
+        last_activity: new Date().toISOString(),
       })
       .eq('user_id', user.id)
       .eq('is_active', true);
@@ -217,8 +205,10 @@ router.post('/refresh',
         wallet_address: user.wallet_address,
         username: user.username,
         email: user.email,
-        created_at: user.created_at,
-        last_login: user.last_login,
+        created_at: new Date(user.created_at),
+        total_rewards_earned: user.total_rewards_earned,
+        last_claim_timestamp: new Date(user.last_claim_timestamp),
+        updated_at: new Date(user.updated_at),
       },
     };
 
@@ -241,8 +231,10 @@ router.get('/verify',
           wallet_address: user.wallet_address,
           username: user.username,
           email: user.email,
-          created_at: user.created_at,
-          last_login: user.last_login,
+          created_at: new Date(user.created_at),
+          total_rewards_earned: user.total_rewards_earned,
+        last_claim_timestamp: new Date(user.last_claim_timestamp),
+        updated_at: new Date(user.updated_at),
         },
       },
       success: true,

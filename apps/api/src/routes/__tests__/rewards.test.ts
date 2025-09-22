@@ -82,7 +82,7 @@ describe('Rewards Routes', () => {
 
   describe('POST /rewards/claim', () => {
     const validClaimRequest = {
-      amount: '5.25',
+      reward_amount: '5.25',
       wallet_address: 'test-wallet-address',
     };
 
@@ -105,7 +105,7 @@ describe('Rewards Routes', () => {
         data: {
           id: 'transaction-id',
           user_id: testUser.id,
-          amount: validClaimRequest.amount,
+          reward_amount: validClaimRequest.reward_reward_amount,
           transaction_signature: 'solana-signature',
           status: 'confirmed',
           timestamp_earned: new Date().toISOString(),
@@ -147,7 +147,7 @@ describe('Rewards Routes', () => {
       const response = await request(app)
         .post('/rewards/claim')
         .set('Authorization', 'Bearer valid-token')
-        .send({ ...validClaimRequest, amount: '10.00' })
+        .send({ ...validClaimRequest, reward_amount: '10.00' })
         .expect(400);
 
       expect(response.body.error.code).toBe('INSUFFICIENT_REWARDS');
@@ -156,7 +156,7 @@ describe('Rewards Routes', () => {
     it('should validate claim amount format', async () => {
       const invalidAmountRequest = {
         ...validClaimRequest,
-        amount: 'invalid-amount',
+        reward_amount: 'invalid-amount',
       };
 
       const response = await request(app)
@@ -197,7 +197,7 @@ describe('Rewards Routes', () => {
     it('should enforce minimum claim amount', async () => {
       const smallAmountRequest = {
         ...validClaimRequest,
-        amount: '0.001', // Below minimum
+        reward_amount: '0.001', // Below minimum
       };
 
       const response = await request(app)
@@ -212,7 +212,7 @@ describe('Rewards Routes', () => {
     it('should enforce maximum claim amount', async () => {
       const largeAmountRequest = {
         ...validClaimRequest,
-        amount: '10000.00', // Above maximum
+        reward_amount: '10000.00', // Above maximum
       };
 
       const response = await request(app)
@@ -247,13 +247,13 @@ describe('Rewards Routes', () => {
         data: [
           {
             id: 'tx-1',
-            amount: '5.25',
+            reward_amount: '5.25',
             timestamp_claimed: new Date().toISOString(),
             status: 'confirmed',
           },
           {
             id: 'tx-2',
-            amount: '3.50',
+            reward_amount: '3.50',
             timestamp_claimed: new Date(Date.now() - 86400000).toISOString(),
             status: 'confirmed',
           },
@@ -303,7 +303,7 @@ describe('Rewards Routes', () => {
       const mockTransactions = [
         {
           id: 'tx-1',
-          amount: '5.25',
+          reward_amount: '5.25',
           transaction_signature: 'sig-1',
           status: 'confirmed',
           timestamp_earned: new Date().toISOString(),
@@ -311,7 +311,7 @@ describe('Rewards Routes', () => {
         },
         {
           id: 'tx-2',
-          amount: '3.50',
+          reward_amount: '3.50',
           transaction_signature: 'sig-2',
           status: 'confirmed',
           timestamp_earned: new Date(Date.now() - 86400000).toISOString(),

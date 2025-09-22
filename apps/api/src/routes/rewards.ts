@@ -136,7 +136,7 @@ router.post('/claim',
       .from('reward_transactions')
       .insert({
         user_id: userId,
-        amount: actualAmount.toFixed(2),
+        reward_amount: actualAmount.toFixed(2),
         status: 'pending',
         timestamp_earned: now.toISOString(),
       })
@@ -151,12 +151,12 @@ router.post('/claim',
     logger.info('Reward claim initiated', {
       userId,
       transactionId: transaction.id,
-      amount: actualAmount,
+      reward_amount: actualAmount,
     });
 
     const response: ClaimRewardResponse = {
       transaction_id: transaction.id,
-      amount: transaction.amount,
+      reward_amount: transaction.reward_amount,
       message: 'Reward claim initiated. Please sign the transaction to complete the claim.',
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
     };
@@ -230,13 +230,13 @@ router.post('/confirm',
       userId,
       transactionId: transaction_id,
       signature,
-      amount: confirmedTransaction.amount,
+      reward_amount: confirmedTransaction.reward_amount,
     });
 
     const response: RewardTransaction = {
       id: confirmedTransaction.id,
       user_id: confirmedTransaction.user_id,
-      amount: confirmedTransaction.amount,
+      reward_amount: confirmedTransaction.reward_amount,
       transaction_signature: confirmedTransaction.transaction_signature,
       status: confirmedTransaction.status as 'pending' | 'confirmed' | 'failed',
       timestamp_earned: new Date(confirmedTransaction.timestamp_earned),
@@ -260,7 +260,7 @@ router.get('/stats',
     // Get user reward statistics
     const { data: transactions, error } = await supabase
       .from('reward_transactions')
-      .select('amount, status, timestamp_claimed')
+      .select('reward_amount, status, timestamp_claimed')
       .eq('user_id', userId);
 
     if (error) {
@@ -269,7 +269,7 @@ router.get('/stats',
     }
 
     const confirmedTransactions = transactions.filter(t => t.status === 'confirmed');
-    const totalEarned = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const totalEarned = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.reward_amount), 0);
     const totalClaims = confirmedTransactions.length;
     const successRate = transactions.length > 0 ? (totalClaims / transactions.length) * 100 : 0;
     const averageClaimAmount = totalClaims > 0 ? totalEarned / totalClaims : 0;
@@ -321,7 +321,7 @@ router.get('/history',
     const formattedTransactions: RewardTransaction[] = (transactions || []).map(t => ({
       id: t.id,
       user_id: t.user_id,
-      amount: t.amount,
+      reward_amount: t.reward_amount,
       transaction_signature: t.transaction_signature,
       status: t.status as 'pending' | 'confirmed' | 'failed',
       timestamp_earned: new Date(t.timestamp_earned),

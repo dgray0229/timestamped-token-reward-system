@@ -25,20 +25,19 @@ export async function verifyPassword(
 }
 
 export function generateSessionToken(userId: string): string {
-  return jwt.sign(
-    { userId },
-    config.jwt.secret,
-    { 
-      expiresIn: config.jwt.expiresIn,
-      issuer: 'reward-system-api',
-      audience: 'reward-system-frontend',
-    }
-  );
+  const payload = { userId };
+  const secret = config.jwt.secret as string;
+  const options: any = {
+    expiresIn: config.jwt.expiresIn,
+    issuer: 'reward-system-api',
+    audience: 'reward-system-frontend',
+  };
+  return jwt.sign(payload, secret, options);
 }
 
 export function verifySessionToken(token: string): { userId: string } | null {
   try {
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = jwt.verify(token, config.jwt.secret as string) as { userId: string };
     return decoded;
   } catch {
     return null;

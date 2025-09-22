@@ -46,7 +46,7 @@ router.get('/',
     const formattedTransactions: RewardTransaction[] = (transactions || []).map(t => ({
       id: t.id,
       user_id: t.user_id,
-      amount: t.amount,
+      reward_amount: t.reward_amount,
       transaction_signature: t.transaction_signature,
       status: t.status as 'pending' | 'confirmed' | 'failed',
       timestamp_earned: new Date(t.timestamp_earned),
@@ -92,7 +92,7 @@ router.get('/:id',
     const response: RewardTransaction = {
       id: transaction.id,
       user_id: transaction.user_id,
-      amount: transaction.amount,
+      reward_amount: transaction.reward_amount,
       transaction_signature: transaction.transaction_signature,
       status: transaction.status as 'pending' | 'confirmed' | 'failed',
       timestamp_earned: new Date(transaction.timestamp_earned),
@@ -187,7 +187,7 @@ router.get('/export',
 
     const formattedTransactions = (transactions || []).map(t => ({
       id: t.id,
-      amount: t.amount,
+      reward_amount: t.reward_amount,
       transaction_signature: t.transaction_signature,
       status: t.status,
       timestamp_earned: t.timestamp_earned,
@@ -211,7 +211,7 @@ router.get('/export',
         headers.join(','),
         ...formattedTransactions.map(t => [
           t.id,
-          t.amount,
+          t.reward_amount,
           t.status,
           t.transaction_signature || '',
           t.timestamp_earned,
@@ -260,7 +260,7 @@ router.get('/search',
     const formattedTransactions: RewardTransaction[] = (transactions || []).map(t => ({
       id: t.id,
       user_id: t.user_id,
-      amount: t.amount,
+      reward_amount: t.reward_amount,
       transaction_signature: t.transaction_signature,
       status: t.status as 'pending' | 'confirmed' | 'failed',
       timestamp_earned: new Date(t.timestamp_earned),
@@ -286,7 +286,7 @@ router.get('/stats',
 
     const { data: transactions, error } = await supabase
       .from('reward_transactions')
-      .select('amount, status, timestamp_earned, timestamp_claimed')
+      .select('reward_amount, status, timestamp_earned, timestamp_claimed')
       .eq('user_id', userId);
 
     if (error) {
@@ -301,7 +301,7 @@ router.get('/stats',
     const successRate = totalTransactions > 0 ? (successfulTransactions / totalTransactions) * 100 : 0;
 
     const confirmedTransactions = transactions.filter(t => t.status === 'confirmed');
-    const totalVolume = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const totalVolume = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.reward_amount), 0);
     const averageTransactionSize = confirmedTransactions.length > 0 ? totalVolume / confirmedTransactions.length : 0;
 
     const sortedTransactions = confirmedTransactions.sort((a, b) => 
@@ -323,7 +323,7 @@ router.get('/stats',
       }
       
       monthlyData[monthKey].count++;
-      monthlyData[monthKey].volume += parseFloat(t.amount);
+      monthlyData[monthKey].volume += parseFloat(t.reward_amount);
     });
 
     Object.entries(monthlyData)
@@ -377,7 +377,7 @@ router.post('/:id/retry',
       .from('reward_transactions')
       .insert({
         user_id: userId,
-        amount: transaction.amount,
+        reward_amount: transaction.reward_amount,
         status: 'pending',
         timestamp_earned: new Date().toISOString(),
       })

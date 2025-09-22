@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.test
+.env.production
+
+# Development files
+src/
+*.ts
+!dist/
+
+# Build artifacts
+dist/
+coverage/
+.nyc_output/
+
+# Testing
+__tests__/
+*.test.ts
+*.spec.ts
+test/
+jest.config.js
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.json
+
+# Docker files
+Dockerfile*
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Linting and formatting
+.eslintrc*
+.prettierrc*
+.eslintcache

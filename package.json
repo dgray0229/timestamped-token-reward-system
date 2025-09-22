@@ -28,7 +28,18 @@
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
     "db:setup": "cd apps/api && npm run db:setup",
     "generate:anchor-types": "cd apps/solana-program && anchor build && anchor generate ts",
-    "setup": "npm install && npm run build:packages"
+    "setup": "npm install && npm run build:packages",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
+    "docker:clean": "docker-compose down -v && docker system prune -f",
+    "railway:setup": "railway run --service api 'psql $DATABASE_URL -f scripts/railway-setup.sql'",
+    "railway:deploy": "railway up",
+    "railway:logs:api": "railway logs --service api",
+    "railway:logs:web": "railway logs --service web"
   },
   "devDependencies": {
     "prettier": "^3.0.0",

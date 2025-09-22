@@ -19,7 +19,7 @@ describe('Transactions Routes', () => {
       const testUser = createTestUser();
       const mockTransactions = [
         createTestTransaction(),
-        { ...createTestTransaction(), id: 'tx-2', amount: '7.75' },
+        { ...createTestTransaction(), id: 'tx-2', reward_amount: '7.75' },
       ];
 
       mockSupabaseClient.from().select().eq().order().range.mockResolvedValueOnce({
@@ -155,7 +155,7 @@ describe('Transactions Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.transaction.id).toBe(testTransaction.id);
-      expect(response.body.data.transaction.amount).toBe(testTransaction.amount);
+      expect(response.body.data.transaction.reward_amount).toBe(testTransaction.reward_amount);
     });
 
     it('should return 404 for non-existent transaction', async () => {
@@ -205,11 +205,11 @@ describe('Transactions Routes', () => {
     it('should return transaction statistics for authenticated user', async () => {
       const mockStats = {
         total_transactions: 25,
-        total_amount: '157.50',
+        total_reward_amount: '157.50',
         confirmed_transactions: 23,
         pending_transactions: 2,
         failed_transactions: 0,
-        average_amount: '6.30',
+        average_reward_amount: '6.30',
         last_transaction_date: new Date().toISOString(),
       };
 
@@ -274,7 +274,7 @@ describe('Transactions Routes', () => {
     it('should export transactions as CSV', async () => {
       const mockTransactions = [
         createTestTransaction(),
-        { ...createTestTransaction(), id: 'tx-2', amount: '7.75' },
+        { ...createTestTransaction(), id: 'tx-2', reward_amount: '7.75' },
       ];
 
       mockSupabaseClient.from().select().eq().order.mockResolvedValueOnce({
@@ -296,7 +296,7 @@ describe('Transactions Routes', () => {
     it('should export transactions as JSON', async () => {
       const mockTransactions = [
         createTestTransaction(),
-        { ...createTestTransaction(), id: 'tx-2', amount: '7.75' },
+        { ...createTestTransaction(), id: 'tx-2', reward_amount: '7.75' },
       ];
 
       mockSupabaseClient.from().select().eq().order.mockResolvedValueOnce({

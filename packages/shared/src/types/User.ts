@@ -22,6 +22,8 @@ export interface User {
   created_at: Date;
   /** Data consistency tracking */
   updated_at: Date;
+  /** Last login tracking (for auth routes) */
+  last_login?: Date;
 }
 
 /** User creation payload (excludes auto-generated fields) */

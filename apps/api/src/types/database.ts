@@ -5,108 +5,102 @@ export interface Database {
         Row: {
           id: string;
           wallet_address: string;
-          username: string | null;
+          username: string;
           email: string | null;
+          total_rewards_earned: string;
+          last_claim_timestamp: string;
           created_at: string;
           updated_at: string;
           last_login: string | null;
-          is_active: boolean;
-          metadata: Record<string, any> | null;
         };
         Insert: {
           id?: string;
           wallet_address: string;
-          username?: string | null;
+          username?: string;
           email?: string | null;
+          total_rewards_earned?: string;
+          last_claim_timestamp?: string;
           created_at?: string;
           updated_at?: string;
           last_login?: string | null;
-          is_active?: boolean;
-          metadata?: Record<string, any> | null;
         };
         Update: {
           id?: string;
           wallet_address?: string;
-          username?: string | null;
+          username?: string;
           email?: string | null;
+          total_rewards_earned?: string;
+          last_claim_timestamp?: string;
           created_at?: string;
           updated_at?: string;
           last_login?: string | null;
-          is_active?: boolean;
-          metadata?: Record<string, any> | null;
         };
       };
       reward_transactions: {
         Row: {
           id: string;
           user_id: string;
-          amount: string;
-          transaction_signature: string | null;
+          reward_amount: string;
+          transaction_signature: string;
           status: 'pending' | 'confirmed' | 'failed';
           timestamp_earned: string;
-          timestamp_claimed: string | null;
+          timestamp_claimed: string;
+          block_number: string;
           created_at: string;
           updated_at: string;
-          metadata: Record<string, any> | null;
         };
         Insert: {
           id?: string;
           user_id: string;
-          amount: string;
-          transaction_signature?: string | null;
+          reward_amount: string;
+          transaction_signature?: string;
           status?: 'pending' | 'confirmed' | 'failed';
           timestamp_earned?: string;
-          timestamp_claimed?: string | null;
+          timestamp_claimed?: string;
+          block_number?: string;
           created_at?: string;
           updated_at?: string;
-          metadata?: Record<string, any> | null;
         };
         Update: {
           id?: string;
           user_id?: string;
-          amount?: string;
-          transaction_signature?: string | null;
+          reward_amount?: string;
+          transaction_signature?: string;
           status?: 'pending' | 'confirmed' | 'failed';
           timestamp_earned?: string;
-          timestamp_claimed?: string | null;
+          timestamp_claimed?: string;
+          block_number?: string;
           created_at?: string;
           updated_at?: string;
-          metadata?: Record<string, any> | null;
         };
       };
       user_sessions: {
         Row: {
           id: string;
           user_id: string;
+          wallet_address: string;
           session_token: string;
           expires_at: string;
-          created_at: string;
-          last_accessed: string;
-          ip_address: string | null;
-          user_agent: string | null;
           is_active: boolean;
+          last_activity: string;
         };
         Insert: {
           id?: string;
           user_id: string;
+          wallet_address: string;
           session_token: string;
           expires_at: string;
-          created_at?: string;
-          last_accessed?: string;
-          ip_address?: string | null;
-          user_agent?: string | null;
           is_active?: boolean;
+          last_activity?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
+          wallet_address?: string;
           session_token?: string;
           expires_at?: string;
-          created_at?: string;
-          last_accessed?: string;
-          ip_address?: string | null;
-          user_agent?: string | null;
           is_active?: boolean;
+          last_activity?: string;
         };
       };
       reward_preferences: {

@@ -1,15 +1,19 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm run build"
+buildCommand = "npm install && npm run build:packages && npm run build:web"
 
 [deploy]
-startCommand = "nginx -g 'daemon off;'"
+startCommand = "npx serve -s apps/web/dist -l 3000"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
+numReplicas = 1
 
 [environment]
-# Frontend environment variables will be set during build
+# These will be injected at build time
+VITE_API_URL = "${{API_URL}}/api"
+VITE_SOLANA_NETWORK = "${{SOLANA_NETWORK}}"
+VITE_SOLANA_RPC_URL = "${{SOLANA_RPC_URL}}"
 
 [networking]
 serviceName = "web"

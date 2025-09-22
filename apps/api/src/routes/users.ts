@@ -193,7 +193,7 @@ router.get('/stats',
     // Get user statistics
     const { data: transactions, error: transactionError } = await supabase
       .from('reward_transactions')
-      .select('amount, status, timestamp_earned, timestamp_claimed')
+      .select('reward_amount, status, timestamp_earned, timestamp_claimed')
       .eq('user_id', userId);
 
     if (transactionError) {
@@ -203,7 +203,7 @@ router.get('/stats',
 
     const totalTransactions = transactions.length;
     const confirmedTransactions = transactions.filter(t => t.status === 'confirmed');
-    const totalEarned = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const totalEarned = confirmedTransactions.reduce((sum, t) => sum + parseFloat(t.reward_amount), 0);
     const successRate = totalTransactions > 0 ? (confirmedTransactions.length / totalTransactions) * 100 : 0;
 
     const sortedTransactions = confirmedTransactions.sort((a, b) => 

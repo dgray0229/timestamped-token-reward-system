@@ -33,6 +33,7 @@ export interface WalletConnectRequest {
 
 /** Wallet connection response */
 export interface WalletConnectResponse {
+  success: boolean;
   user: import('./User').User;
   /** JWT token for authenticated requests */
   session_token: string;
@@ -56,13 +57,12 @@ export interface HealthCheckResponse {
 export interface ClaimRewardResponse {
   /** Database transaction ID */
   transaction_id: string;
-  /** Serialized Solana transaction for frontend signing */
-  solana_instruction: {
-    /** Base64 encoded transaction */
-    transaction: string;
-    /** Transaction message for display */
-    message: string;
-  };
+  /** Reward amount for this claim */
+  reward_amount: string;
+  /** Human-readable message about the claim */
+  message: string;
+  /** When this claim expires */
+  expires_at: string;
 }
 
 /** API response wrapper for consistent response format */
