@@ -116,8 +116,7 @@ router.post(
         .insert({
           wallet_address,
           username: `user_${wallet_address.slice(0, 8)}`,
-          total_rewards_earned: '0',
-          last_claim_timestamp: new Date().toISOString(),
+          last_login: new Date().toISOString(),
         })
         .select()
         .single();
@@ -153,13 +152,12 @@ router.post(
       .from('user_sessions')
       .insert({
         user_id: user.id,
-        wallet_address: user.wallet_address,
         session_token: sessionToken,
         expires_at: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000
         ).toISOString(), // 7 days
         is_active: true,
-        last_activity: new Date().toISOString(),
+        last_accessed: new Date().toISOString(),
       });
 
     if (sessionError) {
@@ -180,8 +178,9 @@ router.post(
         username: user.username,
         email: user.email,
         created_at: new Date(user.created_at),
-        total_rewards_earned: user.total_rewards_earned,
-        last_claim_timestamp: new Date(user.last_claim_timestamp),
+        last_login: user.last_login ? new Date(user.last_login) : undefined,
+        is_active: user.is_active,
+        metadata: user.metadata,
         updated_at: new Date(user.updated_at),
       },
     };
@@ -236,7 +235,7 @@ router.post(
         expires_at: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000
         ).toISOString(),
-        last_activity: new Date().toISOString(),
+        last_accessed: new Date().toISOString(),
       })
       .eq('user_id', user.id)
       .eq('is_active', true);
@@ -255,8 +254,9 @@ router.post(
         username: user.username,
         email: user.email,
         created_at: new Date(user.created_at),
-        total_rewards_earned: user.total_rewards_earned,
-        last_claim_timestamp: new Date(user.last_claim_timestamp),
+        last_login: user.last_login ? new Date(user.last_login) : undefined,
+        is_active: user.is_active,
+        metadata: user.metadata,
         updated_at: new Date(user.updated_at),
       },
     };
@@ -282,9 +282,10 @@ router.get(
           username: user.username,
           email: user.email,
           created_at: new Date(user.created_at),
-          total_rewards_earned: user.total_rewards_earned,
-          last_claim_timestamp: new Date(user.last_claim_timestamp),
           updated_at: new Date(user.updated_at),
+          last_login: user.last_login ? new Date(user.last_login) : undefined,
+          is_active: user.is_active,
+          metadata: user.metadata,
         },
       },
       success: true,

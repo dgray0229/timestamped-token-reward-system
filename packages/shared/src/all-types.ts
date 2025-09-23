@@ -8,11 +8,11 @@ export interface User {
   wallet_address: string;
   email?: string;
   username: string;
-  total_rewards_earned: string;
-  last_claim_timestamp: Date;
   created_at: Date;
   updated_at: Date;
   last_login?: Date;
+  is_active?: boolean;
+  metadata?: any;
 }
 
 export interface CreateUserRequest {
