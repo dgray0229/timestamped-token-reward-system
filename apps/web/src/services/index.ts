@@ -12,6 +12,7 @@ export * from './api';
 export * as walletService from './wallet';
 export * as rewardsService from './rewards';
 export * as transactionsService from './transactions';
+export * as userService from './user';
 
 // Export specific commonly used functions for convenience
 export {
@@ -43,6 +44,17 @@ export {
   exportTransactions,
   subscribeToTransactionUpdates,
 } from './transactions';
+
+export {
+  // User service
+  getUserProfile,
+  updateUserProfile,
+  getUserPreferences,
+  updateUserPreferences,
+  getUserStats,
+  exportUserData,
+  deleteUserAccount,
+} from './user';
 
 export {
   // API utilities

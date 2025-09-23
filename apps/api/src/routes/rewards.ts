@@ -1,3 +1,17 @@
+/**
+ * Rewards Routes - Handle timestamped token reward system
+ *
+ * This module implements the core reward system functionality including:
+ * - Calculating available rewards based on time intervals
+ * - Creating and managing reward claim transactions
+ * - Confirming blockchain transactions
+ * - Providing reward statistics and history
+ *
+ * The system implements a time-based reward mechanism where users earn
+ * tokens based on the hours elapsed since their last claim, with configurable
+ * rates and daily maximums to prevent abuse.
+ */
+
 import { Router, Response } from 'express';
 import { supabase } from '../config/database.js';
 import { config } from '../config/index.js';
@@ -21,46 +35,73 @@ import type {
 
 const router = Router();
 
+/**
+ * GET /rewards/available
+ *
+ * Calculate and return available reward amounts for the authenticated user.
+ * This endpoint implements the core timestamped reward calculation logic.
+ *
+ * Algorithm:
+ * 1. Find user's most recent confirmed reward claim
+ * 2. Calculate hours elapsed since last claim (or registration if no claims)
+ * 3. Check if minimum interval has passed (anti-spam protection)
+ * 4. Calculate reward amount based on elapsed time and configured rates
+ * 5. Apply daily maximum cap to prevent excessive rewards
+ *
+ * @requires Authentication via Bearer token
+ * @returns AvailableRewards object with claimable amount and timing info
+ */
 router.get('/available',
   authenticateToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.userId!;
 
-    // Get user's last claim timestamp
+    // Query the database for user's most recent confirmed transaction
+    // This determines the baseline for calculating elapsed time
     const { data: lastTransaction, error: transactionError } = await supabase
       .from('reward_transactions')
       .select('timestamp_claimed')
       .eq('user_id', userId)
-      .eq('status', 'confirmed')
+      .eq('status', 'confirmed') // Only count successfully claimed rewards
       .order('timestamp_claimed', { ascending: false })
       .limit(1)
       .single();
 
+    // Handle database errors (ignore PGRST116 which means "no rows found")
     if (transactionError && transactionError.code !== 'PGRST116') {
       logger.error('Failed to fetch last transaction', { error: transactionError, userId });
       throw createError('Failed to fetch reward data', 500, 'DATABASE_ERROR');
     }
 
     const now = new Date();
-    const lastClaimTime = lastTransaction?.timestamp_claimed 
+    // Determine baseline time: either last claim or user registration
+    // This ensures new users can claim rewards immediately based on registration time
+    const lastClaimTime = lastTransaction?.timestamp_claimed
       ? new Date(lastTransaction.timestamp_claimed)
-      : new Date(req.user!.created_at); // Use registration time if no claims
+      : new Date(req.user!.created_at); // Fallback to registration time
 
+    // Calculate elapsed hours since last claim (floored to prevent fractional hour claims)
     const hoursSinceLastClaim = Math.floor((now.getTime() - lastClaimTime.getTime()) / (1000 * 60 * 60));
     const minIntervalHours = config.rewards.minClaimIntervalHours;
-    
-    // Check if user can claim rewards
+
+    // Determine eligibility based on minimum claim interval (anti-spam mechanism)
     const canClaim = hoursSinceLastClaim >= minIntervalHours;
     const nextClaimAvailableIn = Math.max(0, minIntervalHours - hoursSinceLastClaim);
 
-    // Calculate available reward amount
+    // Calculate reward amount using time-based algorithm
     let availableAmount = '0';
     if (canClaim) {
-      const rewardHours = Math.min(hoursSinceLastClaim, 24); // Cap at 24 hours
+      // Cap reward hours at 24 to prevent excessive accumulation for inactive users
+      const rewardHours = Math.min(hoursSinceLastClaim, 24);
+
+      // Apply configured hourly rate (e.g., 0.1 tokens per hour)
       const calculatedAmount = rewardHours * config.rewards.rewardRatePerHour;
+
+      // Apply daily maximum cap as final safeguard against excessive rewards
       availableAmount = Math.min(calculatedAmount, config.rewards.maxDailyReward).toFixed(2);
     }
 
+    // Construct response with all relevant reward information
     const response: AvailableRewards = {
       available_amount: availableAmount,
       hours_since_last_claim: hoursSinceLastClaim,

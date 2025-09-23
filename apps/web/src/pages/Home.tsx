@@ -51,14 +51,32 @@ export function HomePage() {
             </div>
           ) : (
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary to-accent px-8 py-4 text-lg font-semibold text-white shadow-lg animate-pulse">
+              <button
+                onClick={() => {
+                  // Scroll to top and focus on wallet connection button in header
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // Give a small delay for scroll, then try to focus the wallet button
+                  setTimeout(() => {
+                    const walletButton = document.querySelector('[data-testid="wallet-adapter-button"]') as HTMLElement;
+                    if (walletButton) {
+                      walletButton.focus();
+                      // Add a subtle highlight effect to draw attention
+                      walletButton.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+                      setTimeout(() => {
+                        walletButton.style.boxShadow = '';
+                      }, 2000);
+                    }
+                  }, 500);
+                }}
+                className="inline-flex items-center justify-center rounded-lg gradient-bg-readable gradient-animated px-8 py-4 text-lg font-semibold shadow-lg hover:scale-105 transform transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary/30"
+              >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 Connect Your Solana Wallet to Start
-              </div>
+              </button>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Use the wallet button in the top navigation to connect your Solana wallet and begin earning timestamped rewards.
+                Click the button above or use the wallet button in the top navigation to connect your Solana wallet and begin earning timestamped rewards.
               </p>
               <div className="flex justify-center">
                 <svg className="w-6 h-6 text-primary animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
